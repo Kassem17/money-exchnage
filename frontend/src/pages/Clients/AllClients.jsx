@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { AppContext } from "../../context/AppContext";
@@ -10,6 +10,9 @@ import io from "socket.io-client";
 import ProcessDetailsModal from "../../components/ProcessDetailsModal";
 import useDeleteClient from "../../hooks/useDeleteClient";
 import { motion } from "framer-motion";
+import { formatWithCommas } from "../../utils/formatWithComma";
+import { formatDate } from "../../utils/formatDate";
+import { IoRemoveCircleSharp } from "react-icons/io5";
 
 const socket = io("http://localhost:5000");
 
@@ -42,7 +45,6 @@ const AllClients = () => {
   const [editableClient, setEditableClient] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
-  // Data fetching
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -67,31 +69,74 @@ const AllClients = () => {
         setLoading(false);
       }
     };
-    if (token) fetchData();
 
-    // Socket listeners
-    socket.on("client:created", (newClient) => {
+    // Socket event handlers
+    const handleClientCreated = (newClient) => {
       setUserData((prev) => [...prev, newClient]);
-    });
+      setFilteredData((prev) => [...prev, newClient]); // Keep filteredData in sync
+    };
 
-    socket.on("client:deleted", (deletedClient) => {
+    const handleClientDeleted = (deletedClient) => {
       const id =
         typeof deletedClient === "string" ? deletedClient : deletedClient._id;
       setUserData((prev) => prev.filter((client) => client._id !== id));
-    });
+      setFilteredData((prev) => prev.filter((client) => client._id !== id));
+    };
 
-    socket.on("client:updated", (updatedClient) => {
+    const handleClientUpdated = (updatedClient) => {
       setUserData((prev) =>
         prev.map((client) =>
           client._id === updatedClient._id ? updatedClient : client
         )
       );
-    });
+      setFilteredData((prev) =>
+        prev.map((client) =>
+          client._id === updatedClient._id ? updatedClient : client
+        )
+      );
+    };
 
+    const handleProcessDeleted = ({ processId, clientId }) => {
+      setUserData((prevClients) =>
+        prevClients.map((client) => {
+          if (client._id !== clientId) return client;
+          return {
+            ...client,
+            processes: client.processes?.filter(
+              (process) => process._id !== processId
+            ),
+          };
+        })
+      );
+      setFilteredData((prevClients) =>
+        prevClients.map((client) => {
+          if (client._id !== clientId) return client;
+          return {
+            ...client,
+            processes: client.processes?.filter(
+              (process) => process._id !== processId
+            ),
+          };
+        })
+      );
+    };
+
+    // Initialize
+    if (token) fetchData();
+
+    // Add socket listeners
+    socket.on("client:created", handleClientCreated);
+    socket.on("client:deleted", handleClientDeleted);
+    socket.on("client:updated", handleClientUpdated);
+    socket.on("processDeleted", handleProcessDeleted);
+
+    // Cleanup function
     return () => {
-      socket.off("client:created");
-      socket.off("client:updated");
-      socket.off("client:deleted");
+      // Remove all socket listeners
+      socket.off("client:created", handleClientCreated);
+      socket.off("client:deleted", handleClientDeleted);
+      socket.off("client:updated", handleClientUpdated);
+      socket.off("processDeleted", handleProcessDeleted);
     };
   }, [backendUrl, token]);
 
@@ -157,6 +202,223 @@ const AllClients = () => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
+  };
+
+  const [selectedDate, setSelectedDate] = useState("");
+  const [filteredProcesses, setFilteredProcesses] = useState(
+    selectedClientProcesses
+  );
+  useEffect(() => {
+    if (!selectedDate) {
+      setFilteredProcesses(selectedClientProcesses);
+      return;
+    }
+
+    // selectedDate format is yyyy-mm-dd from the date input
+    const filtered = selectedClientProcesses.filter((process) => {
+      if (!process.processDate) return false;
+
+      const d = new Date(process.processDate);
+      // Format process date to yyyy-mm-dd for comparison
+      const processDateISO = d.toISOString().split("T")[0];
+      return processDateISO === selectedDate;
+    });
+
+    setFilteredProcesses(filtered);
+  }, [selectedDate, selectedClientProcesses]);
+
+  const printClientProfile = () => {
+    if (!selectedClient) {
+      toast.error("لا يوجد بيانات لطباعة الملف الشخصي");
+      return;
+    }
+
+    const profileWindow = window.open("", "_blank", "width=900,height=600");
+
+    const formatDate = (dateStr) => {
+      if (!dateStr) return "-";
+      const d = new Date(dateStr);
+      return `${d.getDate().toString().padStart(2, "0")}/${(d.getMonth() + 1)
+        .toString()
+        .padStart(2, "0")}/${d.getFullYear()}`;
+    };
+
+    profileWindow.document.write(`
+    <html>
+      <head>
+        <title>${selectedClient.fullname}</title>
+        <style>
+          @media print {
+            @page {
+              size: A4;
+              margin: 0.8cm;
+            }
+            body {
+              font-size: 11px;
+            }
+          }
+
+          body {
+            font-family: Arial, sans-serif;
+            padding: 10px;
+            direction: rtl;
+            font-size: 11px;
+            color: #111;
+            line-height: 1.3;
+          }
+
+          h1 {
+            text-align: center;
+            font-size: 14px;
+            margin: 5px 0 10px;
+            color: #1e3a8a;
+          }
+
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            table-layout: fixed;
+          }
+
+          th, td {
+            border: 1px solid #aaa;
+            padding: 4px 6px;
+            text-align: right;
+            width: 50%;
+            word-wrap: break-word;
+          }
+
+          th {
+            background-color: #f0f0f0;
+            color: #1e40af;
+            font-weight: bold;
+          }
+
+          .footer {
+            text-align: right;
+            font-size: 10px;
+            margin-top: 10px;
+            color: #555;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>الملف الشخصي للعميل</h1>
+
+        <table>
+          <thead><tr><th colspan="2">المعلومات الشخصية</th></tr></thead>
+          <tbody>
+            <tr><td>الاسم الكامل</td><td>${selectedClient.fullname}</td></tr>
+            <tr><td>رقم الهوية</td><td>${
+              selectedClient.IDnumber || "-"
+            }</td></tr>
+            <tr><td>رقم السجل</td><td>${
+              selectedClient.registrationNumber || "-"
+            }</td></tr>
+            <tr><td>رقم الهاتف</td><td>${
+              selectedClient.phoneNumber || "-"
+            }</td></tr>
+            <tr><td>تاريخ الميلاد</td><td>${formatDate(
+              selectedClient.dateOfBirth
+            )}</td></tr>
+            <tr><td>الجنسية</td><td>${
+              selectedClient.nationality || "-"
+            }</td></tr>
+          </tbody>
+        </table>
+
+        <table>
+          <thead><tr><th colspan="2">معلومات العمل والوضع المالي</th></tr></thead>
+          <tbody>
+            <tr><td>العمل</td><td>${selectedClient.work || "-"}</td></tr>
+            <tr><td>الوضع المالي</td><td>${
+              selectedClient.financialStatus === "good" ? "جيد" : "سيء"
+            }</td></tr>
+            <tr><td>مقيم</td><td>${
+              selectedClient.resident ? "نعم" : "لا"
+            }</td></tr>
+            <tr><td>نوع العميل</td><td>${
+              selectedClient.clientType === "greater than 10000"
+                ? "أكثر من 10000"
+                : "أقل من 10000"
+            }</td></tr>
+            <tr><td>صاحب الحق الاقتصادي</td><td>${
+              selectedClient.ownerOfEconomicActivity || "-"
+            }</td></tr>
+            <tr><td>الدخل السنوي</td><td>${
+              formatWithCommas(selectedClient.yearlyIncome) || "0"
+            } $</td></tr>
+          </tbody>
+        </table>
+
+        <table>
+          <thead><tr><th colspan="2">عنوان السكن</th></tr></thead>
+          <tbody>
+            <tr><td>البلد</td><td>${
+              selectedClient.currentAddress?.country || "-"
+            }</td></tr>
+            <tr><td>القضاء</td><td>${
+              selectedClient.currentAddress?.district || "-"
+            }</td></tr>
+            <tr><td>الشارع</td><td>${
+              selectedClient.currentAddress?.street || "-"
+            }</td></tr>
+            <tr><td>المبنى</td><td>${
+              selectedClient.currentAddress?.building || "-"
+            }</td></tr>
+            <tr><td>مكان الولادة</td><td>${
+              selectedClient.bornAddress?.country || "-"
+            }، ${selectedClient.bornAddress?.district || "-"}</td></tr>
+          </tbody>
+        </table>
+
+        <table>
+          <thead><tr><th colspan="2">البنوك المتعامل معها</th></tr></thead>
+          <tbody>
+            ${
+              selectedClient.banksDealingWith?.length
+                ? selectedClient.banksDealingWith
+                    .map((b) => `<tr><td colspan="2">${b.bankName}</td></tr>`)
+                    .join("")
+                : "<tr><td colspan='2'>لا يوجد</td></tr>"
+            }
+          </tbody>
+        </table>
+
+        <table>
+          <thead><tr><th colspan="2">الإحصائيات</th></tr></thead>
+          <tbody>
+            <tr><td>عدد المعاملات</td><td>${
+              selectedClient.processes?.length || 0
+            }</td></tr>
+            <tr><td>تاريخ الإنشاء</td><td>${formatDate(
+              selectedClient.createdAt
+            )}</td></tr>
+            <tr><td>أنشئ بواسطة</td><td>${
+              selectedClient.employeeId?.username || "غير معروف"
+            }</td></tr>
+          </tbody>
+        </table>
+
+        <div class="footer">
+          <p>توقيع الموظف: ______________________</p>
+          <p>تم الطباعة بتاريخ: ${formatDate(new Date())}</p>
+        </div>
+
+        <script>
+          window.onload = function () {
+            setTimeout(function () {
+              window.print();
+              window.close();
+            }, 300);
+          };
+        </script>
+      </body>
+    </html>
+  `);
+
+    profileWindow.document.close();
   };
 
   if (loading) {
@@ -310,8 +572,12 @@ const AllClients = () => {
                           )}
                           <button
                             onClick={() => setDeleteConfirm(client._id)}
-                            className="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-100"
+                            className={`text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-100 ${
+                              !employeeData.canDeleteClient &&
+                              "cursor-not-allowed"
+                            }`}
                             title="حذف"
+                            disabled={!employeeData.canDeleteClient}
                           >
                             <FiTrash2 className="w-5 h-5" />
                           </button>
@@ -320,7 +586,10 @@ const AllClients = () => {
                       <td className="px-2 py-1 border">
                         <button
                           onClick={() => handleShowProcesses(client)}
-                          disabled={!client.processes?.length}
+                          disabled={
+                            !client.processes?.length ||
+                            !employeeData.accessProcesses
+                          }
                           className={`px-2 py-1 rounded text-xs ${
                             client.processes?.length
                               ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
@@ -334,9 +603,13 @@ const AllClients = () => {
                         {client.phoneNumber}
                       </td>
                       <td className="px-2 py-1 border">
-                        {client.registrationNumber}
+                        {client.registrationNumber
+                          ? client.registrationNumber
+                          : "-"}
                       </td>
-                      <td className="px-2 py-1 border">{client.IDnumber}</td>
+                      <td className="px-2 py-1 border">
+                        {client.IDnumber ? client.IDnumber : "-"}
+                      </td>
                       <td className="px-2 py-1 border text-right">
                         &#x202B;{client.fullname}&#x202C; -{" "}
                         <span dir="rtl" className="inline-block">
@@ -449,7 +722,7 @@ const AllClients = () => {
         {/* Client Info Modal */}
         {showClientModal && selectedClient && (
           <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-center justify-center p-4">
-            <div className="bg-white/70 dark:bg-gray-800/80 backdrop-blur-2xl rounded-2xl max-w-7xl w-full p-8 shadow-2xl overflow-y-auto max-h-[90vh] text-right space-y-8 border border-gray-200 dark:border-gray-700">
+            <div className="bg-white/70 dark:bg-gray-800/80 backdrop-blur-2xl rounded-2xl max-w-7xl w-full p-4 shadow-2xl overflow-y-auto max-h-[90vh] text-right space-y-8 border border-gray-200 dark:border-gray-700">
               {/* Header */}
               <div className="flex justify-between items-center border-b border-gray-300 dark:border-gray-600 -mb-7">
                 <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white">
@@ -462,9 +735,18 @@ const AllClients = () => {
                     {selectedClient.employeeId?.username}
                   </div>
                 </h2>
+                <div>
+                  <button
+                    onClick={printClientProfile}
+                    className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white px-4 py-1 rounded font-semibold"
+                  >
+                    🖨️ طباعة
+                  </button>
+                </div>
                 <div className="flex items-center gap-4">
                   {!editMode ? (
                     <button
+                      disabled={!employeeData.editClient}
                       onClick={() => setEditMode(true)}
                       className="text-blue-600 dark:text-blue-400 hover:underline"
                     >
@@ -512,6 +794,7 @@ const AllClients = () => {
                       [": رقم السجل", "registrationNumber"],
                       [": الهاتف", "phoneNumber"],
                       [":ت. الميلاد", "dateOfBirth"],
+                      ["الجنسية", "nationality"],
                     ].map(([label, key]) => (
                       <li
                         key={key}
@@ -554,13 +837,112 @@ const AllClients = () => {
                             new Date(
                               selectedClient.dateOfBirth
                             ).toLocaleDateString()
-                          ) : (
+                          ) : selectedClient[key] ? (
                             selectedClient[key]
+                          ) : (
+                            "-"
                           )}
                         </span>
                       </li>
                     ))}
                   </ul>
+
+                  <div className="bg-white rounded-lg shadow p-4 border border-gray-200 mt-2">
+                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-3">
+                      <svg
+                        className="w-5 h-5 text-blue-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M3 10h18M5 6h14M4 14h16M6 18h12"
+                        />
+                      </svg>
+                      البنوك التي يتعامل معها
+                    </h3>
+
+                    <div className="space-y-2">
+                      {editMode ? (
+                        <>
+                          {editableClient?.banksDealingWith?.map(
+                            (bank, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-200"
+                              >
+                                <input
+                                  type="text"
+                                  className="text-sm w-full px-2 py-1 rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600"
+                                  value={bank.bankName}
+                                  onChange={(e) => {
+                                    const updatedBanks = [
+                                      ...editableClient.banksDealingWith,
+                                    ];
+                                    updatedBanks[index].bankName =
+                                      e.target.value;
+                                    setEditableClient({
+                                      ...editableClient,
+                                      banksDealingWith: updatedBanks,
+                                    });
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updatedBanks =
+                                      editableClient.banksDealingWith.filter(
+                                        (_, i) => i !== index
+                                      );
+                                    setEditableClient({
+                                      ...editableClient,
+                                      banksDealingWith: updatedBanks,
+                                    });
+                                  }}
+                                  className="text-red-500 hover:text-red-700"
+                                >
+                                  ✖
+                                </button>
+                              </div>
+                            )
+                          )}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setEditableClient({
+                                ...editableClient,
+                                banksDealingWith: [
+                                  ...(editableClient.banksDealingWith || []),
+                                  { bankName: "" },
+                                ],
+                              })
+                            }
+                            className="text-sm text-blue-600 hover:underline mt-2"
+                          >
+                            + إضافة بنك جديد
+                          </button>
+                        </>
+                      ) : selectedClient?.banksDealingWith?.length > 0 ? (
+                        selectedClient.banksDealingWith.map((bank, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 p-2 bg-gray-50 hover:bg-blue-50 rounded-md border border-gray-100"
+                          >
+                            <p className="text-sm text-gray-700">
+                              {bank.bankName || "غير معروف"}
+                            </p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500 italic">
+                          لا يوجد بنوك مُسجّلة
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Work Info */}
@@ -570,117 +952,122 @@ const AllClients = () => {
                   </h3>
                   <ul className="space-y-2">
                     {[
-                      [": الجنسية", selectedClient.nationality, "nationality"],
-                      [": العمل", editableClient.work, "work"],
-                      [
-                        ": الوضع المالي",
-                        editableClient.financialStatus === "good"
-                          ? "جيد"
-                          : "سيئ",
-                        "financialStatus",
-                      ],
-                      [
-                        ":مقيم؟",
-                        editableClient.resident ? "نعم" : "لا",
-                        "resident",
-                      ],
-                      [
-                        ": صاحب الحق الإقتصادي",
-                        editableClient.ownerOfEconomicActivity || "لا يوجد",
-                        "ownerOfEconomicActivity",
-                      ],
-                      [
-                        ": نوع العميل",
-                        editableClient.clientType === "greater than 10000"
-                          ? "أكثر من 10000"
-                          : "أقل من 10000",
-                        "clientType",
-                      ],
-                      [
-                        ": الدخل السنوي",
-                        `${editableClient.yearlyIncome} $`,
-                        "yearlyIncome",
-                      ],
-                    ].map(([label, value, key], idx) => (
-                      <li
-                        key={idx}
-                        className="flex flex-row-reverse justify-between items-center gap-4 bg-white/60 dark:bg-gray-700 p-2 rounded-md shadow-sm border border-gray-200 dark:border-gray-600"
-                      >
-                        <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm whitespace-nowrap">
-                          {label}
-                        </span>
-                        <span className="text-gray-800 dark:text-gray-100 text-sm text-left break-words">
-                          {editMode && key !== "nationality" ? (
-                            key === "resident" ? (
-                              <select
-                                value={editableClient[key] ? "yes" : "no"}
-                                onChange={(e) =>
-                                  setEditableClient({
-                                    ...editableClient,
-                                    [key]: e.target.value === "yes",
-                                  })
-                                }
-                                className="bg-white dark:bg-gray-800 text-sm rounded px-2 py-1"
-                              >
-                                <option value="yes">نعم</option>
-                                <option value="no">لا</option>
-                              </select>
-                            ) : key === "financialStatus" ? (
-                              <select
-                                value={editableClient[key]}
-                                onChange={(e) =>
-                                  setEditableClient({
-                                    ...editableClient,
-                                    [key]: e.target.value,
-                                  })
-                                }
-                                className="bg-white dark:bg-gray-800 text-sm rounded px-2 py-1"
-                              >
-                                <option value="good">جيد</option>
-                                <option value="bad">سيئ</option>
-                              </select>
-                            ) : key === "clientType" ? (
-                              <select
-                                value={editableClient[key]}
-                                onChange={(e) =>
-                                  setEditableClient({
-                                    ...editableClient,
-                                    [key]: e.target.value,
-                                  })
-                                }
-                                className="bg-white dark:bg-gray-800 text-sm rounded px-2 py-1"
-                              >
-                                <option value="greater than 10000">
-                                  أكثر من 10000
-                                </option>
-                                <option value="less than 10000">
-                                  أقل من 10000
-                                </option>
-                              </select>
+                      [": العمل", "work"],
+                      [": الوضع المالي", "financialStatus"],
+                      [":مقيم؟", "resident"],
+                      [": صاحب الحق الإقتصادي", "ownerOfEconomicActivity"],
+                      [": نوع العميل", "clientType"],
+                      [": الدخل السنوي", "yearlyIncome"],
+                    ].map(([label, key], idx) => {
+                      const rawValue = editableClient[key];
+
+                      // Handle display formatting
+                      let displayValue = "-";
+
+                      if (key === "financialStatus") {
+                        displayValue =
+                          rawValue === "good"
+                            ? "جيد"
+                            : rawValue === "bad"
+                            ? "سيئ"
+                            : "غير محدد";
+                      } else if (key === "resident") {
+                        displayValue = rawValue ? "نعم" : "لا";
+                      } else if (key === "clientType") {
+                        displayValue =
+                          rawValue === "greater than 10000"
+                            ? "أكثر من 10000"
+                            : rawValue === "less than 10000"
+                            ? "أقل من 10000"
+                            : "-";
+                      } else if (key === "yearlyIncome") {
+                        displayValue =
+                          rawValue != null
+                            ? `${formatWithCommas(rawValue)} $`
+                            : "-";
+                      } else {
+                        displayValue = rawValue || "-";
+                      }
+
+                      return (
+                        <li
+                          key={idx}
+                          className="flex flex-row-reverse justify-between items-center gap-4 bg-white/60 dark:bg-gray-700 p-2 rounded-md shadow-sm border border-gray-200 dark:border-gray-600"
+                        >
+                          <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm whitespace-nowrap">
+                            {label}
+                          </span>
+                          <span className="text-gray-800 dark:text-gray-100 text-sm text-left break-words">
+                            {editMode && key !== "nationality" ? (
+                              key === "resident" ? (
+                                <select
+                                  value={rawValue ? "yes" : "no"}
+                                  onChange={(e) =>
+                                    setEditableClient({
+                                      ...editableClient,
+                                      [key]: e.target.value === "yes",
+                                    })
+                                  }
+                                  className="bg-white dark:bg-gray-800 text-sm rounded px-2 py-1"
+                                >
+                                  <option value="yes">نعم</option>
+                                  <option value="no">لا</option>
+                                </select>
+                              ) : key === "financialStatus" ? (
+                                <select
+                                  value={rawValue || "-"}
+                                  onChange={(e) =>
+                                    setEditableClient({
+                                      ...editableClient,
+                                      [key]: e.target.value,
+                                    })
+                                  }
+                                  className="bg-white dark:bg-gray-800 text-sm rounded px-2 py-1"
+                                >
+                                  <option value="-">غير محدد</option>
+                                  <option value="good">جيد</option>
+                                  <option value="bad">سيئ</option>
+                                </select>
+                              ) : key === "clientType" ? (
+                                <select
+                                  value={rawValue || "less than 10000"}
+                                  onChange={(e) =>
+                                    setEditableClient({
+                                      ...editableClient,
+                                      [key]: e.target.value,
+                                    })
+                                  }
+                                  className="bg-white dark:bg-gray-800 text-sm rounded px-2 py-1"
+                                >
+                                  <option value="greater than 10000">
+                                    أكثر من 10000
+                                  </option>
+                                  <option value="less than 10000">
+                                    أقل من 10000
+                                  </option>
+                                </select>
+                              ) : (
+                                <input
+                                  type={
+                                    key === "yearlyIncome" ? "number" : "text"
+                                  }
+                                  value={rawValue ?? ""}
+                                  onChange={(e) =>
+                                    setEditableClient({
+                                      ...editableClient,
+                                      [key]: e.target.value,
+                                    })
+                                  }
+                                  className="bg-white dark:bg-gray-800 text-sm rounded px-2 py-1"
+                                />
+                              )
                             ) : (
-                              <input
-                                type={
-                                  key === "yearlyIncome" ? "number" : "text"
-                                }
-                                value={editableClient[key] || ""}
-                                onChange={(e) =>
-                                  setEditableClient({
-                                    ...editableClient,
-                                    [key]:
-                                      key === "yearlyIncome"
-                                        ? +e.target.value
-                                        : e.target.value,
-                                  })
-                                }
-                                className="bg-white dark:bg-gray-800 text-sm rounded px-2 py-1"
-                              />
-                            )
-                          ) : (
-                            value
-                          )}
-                        </span>
-                      </li>
-                    ))}
+                              displayValue
+                            )}
+                          </span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
 
@@ -755,44 +1142,29 @@ const AllClients = () => {
                       </li>
                     ))}
                   </ul>
+                  {/* Stats & Actions */}
+                  <div className="flex flex-wrap justify-center gap-6 mt-5">
+                    <div className="bg-white/60 dark:bg-gray-700 text-center p-4 rounded-xl w-40 border shadow">
+                      <p className="text-gray-600 dark:text-gray-300 text-sm mb-1">
+                        عدد المعاملات
+                      </p>
+                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {selectedClient?.processes?.length ?? 0}
+                      </p>
+                    </div>
+                    <div className="bg-white/60 dark:bg-gray-700 text-center p-4 rounded-xl w-40 border shadow">
+                      <p className="text-gray-600 dark:text-gray-300 text-sm mb-1">
+                        تاريخ التعامل
+                      </p>
+                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {formatDate(selectedClient.createdAt)}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Stats & Actions */}
-              <div className="flex flex-wrap justify-center gap-6">
-                <div className="bg-white/60 dark:bg-gray-700 text-center p-4 rounded-xl w-40 border shadow">
-                  <p className="text-gray-600 dark:text-gray-300 text-sm mb-1">
-                    عدد المعاملات
-                  </p>
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {selectedClient?.processes?.length ?? 0}
-                  </p>
-                </div>
-                <div className="bg-white/60 dark:bg-gray-700 text-center p-4 rounded-xl w-40 border shadow">
-                  <p className="text-gray-600 dark:text-gray-300 text-sm mb-1">
-                    تاريخ التعامل
-                  </p>
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {(() => {
-                      const d = new Date(selectedClient.createdAt);
-                      const day = String(d.getDate()).padStart(2, "0");
-                      const month = String(d.getMonth() + 1).padStart(2, "0");
-                      const year = String(d.getFullYear()).slice(-2);
-                      return `${day}/${month}/${year}`;
-                    })()}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center mt-6">
-                <button
-                  className="text-blue-600 dark:text-blue-400 hover:underline"
-                  onClick={() =>
-                    handleBanksClick(selectedClient.banksDealingWith)
-                  }
-                >
-                  🏦 عرض البنوك المتعامل معها
-                </button>
+              <div className="flex justify-between items-center ">
                 <button
                   onClick={() => setShowClientModal(false)}
                   className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white px-6 py-2 rounded-lg font-semibold transition"
@@ -806,63 +1178,90 @@ const AllClients = () => {
 
         {/* Processes Modal */}
         {showProcessesModal && (
-          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-gray-900 rounded-xl w-full max-w-3xl p-6 shadow-lg max-h-[80vh] overflow-y-auto border border-gray-300 dark:border-gray-700 transition-all">
-              <div className="flex items-center justify-between border-b pb-4 mb-4">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-                  العمليات ({selectedClientProcesses.length})
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-6">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-4xl p-8 shadow-xl max-h-[85vh] overflow-y-auto border border-gray-300 dark:border-gray-700 transition-all">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+                <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">
+                  العمليات ({filteredProcesses.length})
                 </h2>
+
+                {/* Date Input */}
+                <input
+                  type="date"
+                  className="w-full sm:w-44 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  aria-label="اختر تاريخ العملية"
+                  max={new Date().toISOString()}
+                />
+
+                {selectedDate && (
+                  <button
+                    onClick={() => setSelectedDate("")}
+                    title="عرض الجميع"
+                  >
+                    <IoRemoveCircleSharp className="w-7 h-7 text-red-500" />
+                  </button>
+                )}
+
                 <button
-                  onClick={() => setShowProcessesModal(false)}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-white transition"
+                  onClick={() => {
+                    setShowProcessesModal(false);
+                    setSelectedDate(""); // Clear the date input
+                    setFilteredProcesses(selectedClientProcesses); // Reset filter to show all
+                  }}
+                  className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition text-lg font-bold"
                   aria-label="إغلاق"
                 >
-                  <X className="w-6 h-6" />
+                  ×
                 </button>
               </div>
 
-              {selectedClientProcesses.length === 0 ? (
-                <div className="text-center text-gray-500 dark:text-gray-400 text-lg py-16">
-                  لا توجد عمليات متاحة
+              {filteredProcesses.length === 0 ? (
+                <div className="text-center text-gray-500 dark:text-gray-400 text-lg py-20">
+                  لا توجد عمليات تطابق التاريخ المحدد
                 </div>
               ) : (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {selectedClientProcesses.map((process, idx) => (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-7">
+                  {filteredProcesses.map((process, idx) => (
                     <div
-                      key={idx}
-                      className="group bg-white dark:bg-gray-900 rounded-xl shadow-sm hover:shadow-lg border border-gray-200 dark:border-gray-700 p-5 transition-all duration-200 cursor-pointer"
+                      key={process._id || idx}
+                      className="group bg-gray-50 dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg border border-gray-200 dark:border-gray-700 p-6 cursor-pointer transition duration-300"
                       onClick={() => {
                         setSelectedProcess(process);
                         setShowProcessModal(true);
                       }}
+                      disabled={!employeeData.accessProcesses}
                     >
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-lg font-bold text-gray-800 dark:text-white">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
                           العملية #{idx + 1}
                         </h3>
                         <span
-                          className={`text-xs px-2 py-1 rounded-full font-medium ${
+                          className={`text-sm px-3 py-1 rounded-full font-semibold ${
                             process.processType === "Sell"
-                              ? "bg-red-100 text-red-600 dark:bg-red-800 dark:text-red-200"
-                              : "bg-green-100 text-green-600 dark:bg-green-800 dark:text-green-200"
+                              ? "bg-red-200 text-red-700 dark:bg-red-900 dark:text-red-300"
+                              : "bg-green-200 text-green-700 dark:bg-green-900 dark:text-green-300"
                           }`}
                         >
                           {process.processType === "Sell" ? "بيع" : "شراء"}
                         </span>
                       </div>
-                      <div>
-                        {process?.processDate
-                          ? (() => {
-                              const d = new Date(process.processDate);
-                              const day = String(d.getDate()).padStart(2, "0");
-                              const month = String(d.getMonth() + 1).padStart(
-                                2,
-                                "0"
-                              );
-                              const year = String(d.getFullYear()).slice(2);
-                              return `${day}/${month}/${year}`;
-                            })()
-                          : "لا يوجد"}
+                      <div className="text-gray-700 dark:text-gray-300 text-base font-medium justify-between gap-10 flex">
+                        <span>
+                          {process?.processDate
+                            ? formatDate(process?.processDate)
+                            : "لا يوجد تاريخ"}
+                        </span>
+                        <span
+                          className={`text-sm px-3 py-1 rounded-full font-semibold ${
+                            process.processAmountBuy >= 10000
+                              ? "bg-yellow-200 text-yellow-700 dark:bg-yellow-900 dark:yellow-green-300"
+                              : "bg-blue-200 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                          } `}
+                        >
+                          {formatWithCommas(process.processAmountBuy)}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -878,57 +1277,8 @@ const AllClients = () => {
             onClose={() => setShowProcessModal(false)}
             process={selectedProcess}
             userData={userData}
+            employeeData={employeeData}
           />
-        )}
-
-        {/* Banks Modal */}
-        {showBanksModal && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[80vh] overflow-y-auto border border-gray-200 dark:border-gray-800">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
-                  البنوك المتعامل معها
-                </h2>
-                <button
-                  onClick={() => setShowBanksModal(false)}
-                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white transition-colors"
-                  aria-label="إغلاق"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              {selectedBanks.length === 0 ? (
-                <div className="text-center text-gray-500 dark:text-gray-400 text-base">
-                  لا توجد بنوك متاحة حالياً
-                </div>
-              ) : (
-                <ul className="space-y-2 list-inside text-right text-gray-800 dark:text-gray-100">
-                  {selectedBanks.map((bank, idx) => (
-                    <li
-                      key={idx}
-                      className="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-md shadow-sm"
-                    >
-                      {bank.bankName}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
         )}
 
         {deleteConfirm && (

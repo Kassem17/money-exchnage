@@ -3,6 +3,7 @@ import useLogin from "../hooks/useLogin";
 import backgroundImage from "../assets/bg.avif";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { ArrowBigLeftDash } from "lucide-react";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -67,9 +68,9 @@ const Login = () => {
               </p>
               <p
                 onClick={() => navigate("/")}
-                className="text-sm mt-1 text-end text-white/70 cursor-pointer"
+                className="text-sm mt-1 text-end text-white/70 cursor-pointer flex"
               >
-                Go To home page
+                <ArrowBigLeftDash /> القائمة الرئيسية
               </p>
             </div>
           </div>

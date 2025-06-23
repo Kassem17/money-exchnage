@@ -1,12 +1,23 @@
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import KYC from "./KYC";
 import CTS from "./CTS";
 import EditProcess from "./EditProcess";
+import { motion } from "framer-motion";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { AppContext } from "../context/AppContext";
+import { formatDate } from "../utils/formatDate";
+import { formatWithCommas } from "../utils/formatWithComma";
+import { io } from "socket.io-client";
 
-const ProcessDetailsModal = ({ process, onClose, userData }) => {
+const socket = io("http://localhost:5000");
+
+const ProcessDetailsModal = ({ process, onClose, userData, employeeData }) => {
   if (!process) return null;
   const modalRef = useRef(null);
+
+  const { backendUrl, token } = useContext(AppContext);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -18,14 +29,6 @@ const ProcessDetailsModal = ({ process, onClose, userData }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
 
-  const formatDate = (dateStr) => {
-    const d = new Date(dateStr);
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = String(d.getFullYear()).slice(-2);
-    return `${day}/${month}/${year}`;
-  };
-
   const client = userData.find((cli) =>
     cli.processes?.some((pro) => pro._id === process._id)
   );
@@ -35,6 +38,233 @@ const ProcessDetailsModal = ({ process, onClose, userData }) => {
 
   const [selectedProcess, setSelectedProcess] = useState(null);
 
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+
+  const [currenciesData, setCurrenciesData] = useState([]);
+
+  useEffect(() => {
+    const fetchCurrencyData = async () => {
+      try {
+        const { data } = await axios.get(
+          backendUrl + "/api/employee/get-currency"
+        );
+        if (data.success) {
+          setCurrenciesData(data.currencies);
+        }
+      } catch (error) {
+        console.error(error.message);
+      }
+    };
+    fetchCurrencyData();
+    socket.on("Currency:Added", (newCurrency) => {
+      setCurrenciesData((prev) => [...prev, newCurrency]);
+    });
+
+    return () => socket.off("Currency:Added");
+  }, [backendUrl]);
+
+  const handleDelete = async (id) => {
+    try {
+      const { data } = await axios.delete(
+        backendUrl + `/api/employee/delete-process/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (data.success) {
+        toast.success(data.message);
+        setDeleteConfirm(null);
+        onClose();
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error("Error deleting process:", error);
+      toast.error("Failed to delete process");
+    }
+  };
+
+  let from = process.fromCurrency;
+  let to = process.toCurrency;
+
+  const toCurrencyName = currenciesData.find((c) => c.code === to)?.name || "";
+  const fromCurrencyName =
+    currenciesData.find((c) => c.code === from)?.name || "";
+
+  const handlePrint = () => {
+    const content = document.getElementById("printable-area");
+    if (!content) {
+      alert("لا يوجد محتوى للطباعة");
+      return;
+    }
+
+    const printWindow = window.open("", "_blank", "width=900,height=700");
+
+    printWindow.document.write(`
+    <html lang="ar" dir="rtl">
+      <head>
+        <title>${formatDate(process.processDate)}---تفاصيل العملية</title>
+        <style>
+          @media print {
+            @page {
+              size: A4;
+              margin: 1cm;
+            }
+            body {
+              font-size: 12px;
+              -webkit-print-color-adjust: exact;
+              margin: 0;
+              padding: 0;
+            }
+          }
+          body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f9fafb;
+            margin: 0;
+            padding: 30px;
+            color: #1f2937;
+            direction: rtl;
+          }
+          .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgb(0 0 0 / 0.1);
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 25px 35px;
+          }
+          h1 {
+            text-align: center;
+            font-size: 22px;
+            margin-bottom: 25px;
+            color: #2563eb;
+            font-weight: 700;
+          }
+          table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 12px;
+            font-size: 14px;
+          }
+          tbody tr {
+            background: #f3f4f6;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+            display: table-row;
+          }
+          th, td {
+            padding: 12px 16px;
+            vertical-align: middle;
+          }
+          th {
+            text-align: right;
+            width: 40%;
+            font-weight: 600;
+            color: #374151;
+            border-right: 4px solid #2563eb;
+            border-radius: 8px 0 0 8px;
+          }
+          td {
+            background: white;
+            border-radius: 0 8px 8px 0;
+            font-weight: 700;
+            color: #111827;
+            word-wrap: break-word;
+          }
+          .process-type {
+            display: inline-block;
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+            color: white;
+          }
+          .sell {
+            background-color: #dc2626; /* red */
+          }
+          .buy {
+            background-color: #16a34a; /* green */
+          }
+          .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #6b7280;
+            text-align: right;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 12px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>🧾 تفاصيل العملية</h1>
+          <h1><strong>إسم العميل:</strong> ${client.fullname}   </h1>
+
+          <table>
+            <tbody>
+              <tr>
+                <th>تاريخ العملية</th>
+                <td>${formatDate(process.processDate)}</td>
+              </tr>
+              <tr>
+                <th>تحويل العملات</th>
+                <td>${fromCurrencyName} -> ${toCurrencyName}</td>
+              </tr>
+              <tr>
+                <th>المبلغ المحول</th>
+                <td>${formatWithCommas(
+                  process.processAmountSell
+                )} → ${formatWithCommas(process.processAmountBuy)}  </td>
+              </tr>
+              <tr>
+                <th>سعر الصرف</th>
+                <td>${formatWithCommas(process.exchangeRate)} ${
+      process.toCurrency
+    }</td>
+              </tr>
+              <tr>
+                <th>مصدر الأموال</th>
+                <td>${process.moneySource}</td>
+              </tr>
+              <tr>
+                <th>وجهة الأموال</th>
+                <td>${process.moneyDestination}</td>
+              </tr>
+              <tr>
+                <th>نوع العملية</th>
+                <td>
+                  <span class="process-type ${
+                    process.processType === "Sell" ? "sell" : "buy"
+                  }">
+                    ${process.processType === "Sell" ? "بيع" : "شراء"}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="footer">
+            <p>تم الطباعة بتاريخ: ${formatDate(new Date())}</p>
+          </div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(() => {
+              window.print();
+              window.close();
+            }, 300);
+          }
+        </script>
+      </body>
+    </html>
+  `);
+
+    printWindow.document.close();
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
       <div
@@ -42,7 +272,10 @@ const ProcessDetailsModal = ({ process, onClose, userData }) => {
         className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-3xl p-6 sm:p-8 max-h-[85vh] overflow-y-auto transition-all duration-300 space-y-8"
       >
         {/* Header */}
-        <div className="flex justify-between items-center border-b pb-4 border-gray-200 dark:border-gray-700">
+        <div
+          id="printable-area"
+          className="flex justify-between items-center border-b pb-4 border-gray-200 dark:border-gray-700"
+        >
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             🧾 <span>تفاصيل العملية</span>
           </h2>
@@ -73,15 +306,19 @@ const ProcessDetailsModal = ({ process, onClose, userData }) => {
             { label: "تاريخ العملية", value: formatDate(process.processDate) },
             {
               label: "تحويل العملات",
-              value: `${process.fromCurrency} → ${process.toCurrency}`,
+              value: `${fromCurrencyName} -> ${toCurrencyName}`,
             },
             {
               label: "المبلغ المحول",
-              value: `${process.processAmountBuy} → ${process.processAmountSell}`,
+              value: `${formatWithCommas(
+                process.processAmountBuy
+              )} → ${formatWithCommas(process.processAmountSell)}`,
             },
             {
               label: "سعر الصرف",
-              value: `${process.exchangeRate} ${process.toCurrency}`,
+              value: `${formatWithCommas(process.exchangeRate)} ${
+                process.toCurrency
+              }`,
             },
           ].map((item, idx) => (
             <div
@@ -140,6 +377,7 @@ const ProcessDetailsModal = ({ process, onClose, userData }) => {
           {/* Edit Button */}
           <div className="flex justify-start ">
             <button
+              disabled={!employeeData.editProcess}
               onClick={() => {
                 setShowEditModel(true);
                 setSelectedProcess(process);
@@ -148,10 +386,22 @@ const ProcessDetailsModal = ({ process, onClose, userData }) => {
             >
               تعديل العملية
             </button>
+            <button
+              onClick={() => setDeleteConfirm(process._id)}
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 ml-4 rounded-lg text-sm shadow transition"
+            >
+              مسح العملية
+            </button>
+            <button
+              onClick={handlePrint}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm shadow transition ml-4"
+            >
+              طباعة العملية
+            </button>
           </div>
 
           {/* Conditional Buttons for Greater Clients */}
-          {client.clientType === "greater than 10000" && (
+          {process?.processAmountBuy >= 10000 && (
             <div className="flex flex-wrap justify-center gap-4">
               {[
                 { label: "عرض KYC", type: "KYC" },
@@ -199,7 +449,7 @@ const ProcessDetailsModal = ({ process, onClose, userData }) => {
               clientName: client?.fullname,
               clientId: client?._id,
               processDate: process?.processDate,
-              fromCurrency: process?.fromCurrency,
+              fromCurrency: fromCurrencyName,
               amount: process?.processAmountBuy,
               moneySource: process?.moneySource,
               moneyDestination: process?.moneyDestination,
@@ -215,6 +465,37 @@ const ProcessDetailsModal = ({ process, onClose, userData }) => {
               setSelectedProcess(null);
             }}
           />
+        )}
+        {deleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white p-6 rounded-xl shadow-xl max-w-md w-full"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 text-right">
+                تأكيد الحذف
+              </h3>
+              <p className="text-gray-600 mb-6 text-right">
+                هل أنت متأكد أنك تريد حذف هذا الموظف؟ لا يمكن التراجع عن هذا
+                الإجراء.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setDeleteConfirm(null)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={() => handleDelete(deleteConfirm)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                >
+                  حذف
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </div>
     </div>

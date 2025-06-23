@@ -8,6 +8,9 @@ const PERMISSIONS = [
   { id: "accessClientGreater", label: "السماح بالوصول لقائمة العملاء > 10000" },
   { id: "accessClientLess", label: "السماح بالوصول لقائمة العملاء < 10000" },
   { id: "editClient", label: "السماح بتعديل معلومات العميل" },
+  { id: "editProcess", label: "تعديل العمليات" },
+  { id: "canDeleteClient", label: "مسح بيانات العميل" },
+  { id: "accessProcesses", label: "الوصول الى بيانات العملية" },
 ];
 
 const Permissions = ({ formData, setFormData }) => {
@@ -36,7 +39,7 @@ const Permissions = ({ formData, setFormData }) => {
         الصلاحيات
       </p>
 
-      <div className="flex items-center justify-end " >
+      <div className="flex items-center justify-end ">
         <label htmlFor="selectAll" className="ml-2 block text-sm text-gray-700">
           تحديد الكل
         </label>

@@ -223,7 +223,9 @@ const KYC = ({ formData, onClose }) => {
                   <td colSpan="2" className="p-2 font-semibold">
                     <span>صاحب الحق الاقتصادي من تنفيذ العمليات:</span>
                     <span className={`mr-2 font-medium`}>
-                      {client?.ownerOfEconomicActivity}
+                      {client?.ownerOfEconomicActivity
+                        ? client?.ownerOfEconomicActivity
+                        : "غير محدد"}
                     </span>
                   </td>
                 </tr>

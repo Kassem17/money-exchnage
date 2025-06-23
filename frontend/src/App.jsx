@@ -19,10 +19,12 @@ import CreateCompany from "./pages/CreateCompany";
 import Employee from "./pages/Employee";
 import CTS from "./components/CTS";
 import KYC from "./components/KYC";
-import MakeReport from "./pages/MakeReport";
+
 import CreateProcessLess from "./pages/ProcessesCreation/CreateProcessLess";
 import CreateProcessGreater from "./pages/ProcessesCreation/CreateProcessGreater";
 import AllClients from "./pages/Clients/AllClients";
+import MakeReport from "./pages/MakeReport";
+import MakeReportForGreater from "./pages/MakeReportForGreater";
 
 const App = () => {
   const { token, userData, loading } = useContext(AppContext);
@@ -66,6 +68,7 @@ const App = () => {
       <Route path="/kyc" element={<KYC />} />
       <Route path="/clients" element={<AllClients />} />
       <Route path="/make-report" element={<MakeReport />} />
+      <Route path="/make-report-greater" element={<MakeReportForGreater />} />
     </>
   );
 
@@ -99,7 +102,7 @@ const App = () => {
       />
 
       {/* Main Content */}
-      <main className="flex-grow p-4">
+      <main className="flex-grow ">
         <Routes>
           <Route path="/reset-password" element={<ResetPassword />} />
 

@@ -21,6 +21,9 @@ const AddEmployee = () => {
     editClient: false,
     accessClientLess: false,
     accessClientGreater: false,
+    editProcess: false,
+    canDeleteClient: false,
+    accessProcesses: false,
     role: "employee",
   });
   const [loading, setLoading] = useState(false);
@@ -61,6 +64,9 @@ const AddEmployee = () => {
           editClient: false,
           accessClientLess: false,
           accessClientGreater: false,
+          editProcess: false,
+          canDeleteClient: false,
+          accessProcesses: false,
           role: "employee",
         });
       } else {
@@ -86,6 +92,9 @@ const AddEmployee = () => {
       accessClientLess: false,
       accessClientGreater: false,
       role: "employee",
+      editProcess: false,
+      canDeleteClient: false,
+      accessProcesses: false,
     });
   };
 
@@ -178,6 +187,9 @@ const AddEmployee = () => {
                       editClient: role === "admin",
                       accessClientLess: role === "admin",
                       accessClientGreater: role === "admin",
+                      editProcess: role === "admin",
+                      canDeleteClient: role === "admin",
+                      accessProcesses: role === "admin",
                     };
                     setFormData((prev) => ({ ...prev, role, ...perms }));
                   }}

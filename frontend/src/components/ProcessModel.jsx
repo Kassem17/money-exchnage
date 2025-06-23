@@ -1,20 +1,23 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import EditProcess from "./EditProcess";
+import { AppContext } from "../context/AppContext";
+import { formatDate } from "../utils/formatDate";
+import { formatWithCommas } from "../utils/formatWithComma";
 
-const ProcessModel = ({ onClose, clientProcesses, SelectedClient }) => {
+const ProcessModel = ({
+  onClose,
+  clientProcesses,
+  SelectedClient,
+  selectedFilter,
+}) => {
   const clientName = clientProcesses[0]?.clientId?.fullname || "Unknown Client";
   const [showEditModel, setShowEditModel] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState(null);
 
-  const formatDate = (dateString) => {
-    const d = new Date(dateString);
-    return d.toLocaleDateString("en-GB"); // DD/MM/YYYY format
-  };
+  const { userData } = useContext(AppContext);
 
   const min = clientProcesses[0]?.clientId.minimum;
   const max = clientProcesses[0]?.clientId.maximum;
-
-
 
   const modalRef = useRef(null);
 
@@ -46,9 +49,7 @@ const ProcessModel = ({ onClose, clientProcesses, SelectedClient }) => {
               Client Processes
             </h2>
             <p className="text-sm text-gray-600">{clientName}</p>
-            <p className="text-sm text-gray-600">
-              {min}-{max}
-            </p>
+            <p># {clientProcesses.length}</p>
           </div>
           <button
             onClick={onClose}
@@ -75,11 +76,9 @@ const ProcessModel = ({ onClose, clientProcesses, SelectedClient }) => {
                     Exchange
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount (Sell)
+                    From → To
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount (Buy)
-                  </th>
+
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
@@ -90,7 +89,6 @@ const ProcessModel = ({ onClose, clientProcesses, SelectedClient }) => {
                   <tr
                     key={process._id}
                     className="hover:bg-gray-50 cursor-pointer text-left"
-                    
                   >
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatDate(process.processDate)}
@@ -105,20 +103,22 @@ const ProcessModel = ({ onClose, clientProcesses, SelectedClient }) => {
                       →
                       <span className="font-medium"> {process.toCurrency}</span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-red-500 font-medium">
-                      {process.processAmountSell || "-"}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      {formatWithCommas(process.processAmountBuy) || "-"} →{" "}
+                      {formatWithCommas(process.processAmountSell) || "-"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-green-500 font-medium">
-                      {process.processAmountBuy || "-"}
-                    </td>
+
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <button
+                        disabled={!userData.editProcess}
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedProcess(process);
                           setShowEditModel(true);
                         }}
-                        className="text-blue-600 hover:text-blue-800 font-medium"
+                        className={`text-blue-600 hover:text-blue-800 font-medium ${
+                          !userData.editProcess && " cursor-not-allowed"
+                        }`}
                       >
                         Edit
                       </button>
@@ -137,7 +137,7 @@ const ProcessModel = ({ onClose, clientProcesses, SelectedClient }) => {
         </div>
 
         {/* Summary Footer */}
-        {clientProcesses.length > 0 && (
+        {clientProcesses.length > 0 && selectedFilter === "less" && (
           <div className="sticky bottom-0 bg-gray-50 px-6 py-3 border-t flex justify-between items-center">
             <p className="text-sm text-gray-600">
               Showing {clientProcesses.length} processes
@@ -147,13 +147,16 @@ const ProcessModel = ({ onClose, clientProcesses, SelectedClient }) => {
                 <span className="text-gray-600">Total Sell:</span>
                 <span className="font-medium text-red-500 ml-2">
                   {clientProcesses.reduce(
-                    (sum, p) => sum + (p.processAmountSell || 0),
+                    (sum, p) =>
+                      formatWithCommas(sum + (p.processAmountSell || 0)),
                     0
                   )}
                 </span>
               </p>
+
               <p className="text-sm">
                 <span className="text-gray-600">Total Buy:</span>
+
                 <span
                   className={`font-medium ml-2 ${
                     totalBuy < min
@@ -163,7 +166,7 @@ const ProcessModel = ({ onClose, clientProcesses, SelectedClient }) => {
                       : "text-yellow-500"
                   }`}
                 >
-                  {totalBuy} (
+                  {formatWithCommas(totalBuy)} (
                   {totalBuy < min ? "Less" : totalBuy > max ? "High" : "Medium"}
                   )
                 </span>

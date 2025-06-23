@@ -3,15 +3,17 @@ import { AppContext } from "../context/AppContext";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
+import { formatDate } from "../utils/formatDate";
+import { formatWithCommas } from "../utils/formatWithComma";
 
-const CTS = ({ formData, onClose }) => {
+const CTS = ({ formData, onClose, currenciesData }) => {
   const { backendUrl, token, company, userData } = useContext(AppContext);
   const [searchParams] = useSearchParams();
   const id = searchParams.get("processId");
 
   const handlePrint = () => {
     const originalTitle = document.title;
-    document.title = `نموذج اعرف عميلك - ${clientName}`;
+    document.title = `إستمارة عملية نقدية- ${clientName}`;
 
     const style = document.createElement("style");
     style.innerHTML = `
@@ -86,6 +88,11 @@ const CTS = ({ formData, onClose }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
 
+  const from = formData?.fromCurrency;
+
+  const fromCurrencyName =
+    currenciesData?.find((c) => c.code === from)?.name || "";
+
   return (
     <div
       className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center overflow-y-auto  print:bg-transparent print:m-7"
@@ -129,16 +136,7 @@ const CTS = ({ formData, onClose }) => {
                     التاريخ:
                     <span className="mr-10 font-normal">
                       {formData?.processDate
-                        ? (() => {
-                            const d = new Date(formData.processDate);
-                            const day = String(d.getDate()).padStart(2, "0");
-                            const month = String(d.getMonth() + 1).padStart(
-                              2,
-                              "0"
-                            );
-                            const year = String(d.getFullYear()).slice(2);
-                            return `${day}/${month}/${year}`;
-                          })()
+                        ? formatDate(formData?.processDate)
                         : "لا يوجد"}
                     </span>
                   </td>
@@ -165,7 +163,9 @@ const CTS = ({ formData, onClose }) => {
                   <td className="p-2 w-1/2 font-semibold flex gap-2 text-nowrap">
                     نوع العملة :
                     <span className="font-normal">
-                      {formData?.fromCurrency || "لا يوجد"}
+                      {fromCurrencyName
+                        ? fromCurrencyName
+                        : formData?.fromCurrency || "لا يوجد"}
                     </span>
                   </td>
                 </tr>
@@ -174,7 +174,7 @@ const CTS = ({ formData, onClose }) => {
                   <td className="p-2 w-1/2 font-semibold flex gap-2 text-nowrap">
                     قيمة العملية :
                     <span className="font-normal">
-                      {formData?.amount || "لا يوجد"}
+                      {formatWithCommas(formData?.amount) || "لا يوجد"}
                     </span>
                   </td>
                 </tr>
@@ -182,14 +182,28 @@ const CTS = ({ formData, onClose }) => {
                 <tr className="border border-black">
                   <td colSpan="2" className="p-2 font-semibold flex gap-2">
                     مصدر أموال هذه العملية :
-                    <span className="font-normal">{formData.moneySource}</span>
+                    <span
+                      className={`font-normal ${
+                        formData.moneySource ? "text-black" : "text-red-500"
+                      }`}
+                    >
+                      {formData.moneySource ? formData.moneySource : "غير محدد"}
+                    </span>
                   </td>
                 </tr>
                 <tr className="border border-black">
                   <td colSpan="2" className="p-2 font-semibold flex gap-2">
                     وجهة إستعمال أموال هذه العملية :
-                    <span className="font-normal">
-                      {formData.moneyDestination}
+                    <span
+                      className={`font-normal ${
+                        formData.moneyDestination
+                          ? "text-black"
+                          : "text-red-500"
+                      }`}
+                    >
+                      {formData.moneyDestination
+                        ? formData.moneyDestination
+                        : "غير محدد"}
                     </span>
                   </td>
                 </tr>
@@ -212,13 +226,7 @@ const CTS = ({ formData, onClose }) => {
                 <span className="font-semibold">التاريخ:</span>
                 <span className="mr-10 font-normal">
                   {formData?.processDate
-                    ? (() => {
-                        const d = new Date(formData.processDate);
-                        const day = String(d.getDate()).padStart(2, "0");
-                        const month = String(d.getMonth() + 1).padStart(2, "0");
-                        const year = String(d.getFullYear()).slice(2);
-                        return `${day}/${month}/${year}`;
-                      })()
+                    ? formatDate(formData?.processDate)
                     : "لا يوجد"}
                 </span>
               </div>

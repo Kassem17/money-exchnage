@@ -1,32 +1,53 @@
 import React, { useState, useRef, useEffect, useContext } from "react";
 import ProcessModel from "../../components/ProcessModel";
 import { AppContext } from "../../context/AppContext";
+import { formatWithCommas } from "../../utils/formatWithComma";
 
 const GeneralReportTable = ({
   generalProcesses,
   allClients,
   startDate,
   endDate,
+  selectedFilter,
 }) => {
-  const [selectedFilter, setSelectedFilter] = useState("");
   const tableRef = useRef();
+  const { userData } = useContext(AppContext);
 
-  console.log(generalProcesses);
-
-  const clientsWithProcessCount = allClients.map((client) => {
-    const processCount = generalProcesses.filter(
-      (process) => process.clientId?._id === client._id
-    ).length;
-    return { ...client, processCount };
+  // Filter processes based on processAmountBuy
+  const filteredProcesses = generalProcesses.filter((process) => {
+    if (selectedFilter === "less") {
+      return (process.processAmountBuy || 0) < 10000;
+    } else if (selectedFilter === "greater") {
+      return (process.processAmountBuy || 0) >= 10000;
+    }
+    return true;
   });
 
-  const filteredClients = clientsWithProcessCount.filter((client) => {
-    if (selectedFilter === "greater")
-      return client.clientType === "greater than 10000";
+  // Group processes by client
+  const clientsWithProcesses = allClients.map((client) => {
+    const clientProcesses = filteredProcesses.filter(
+      (process) => process.clientId?._id === client._id
+    );
+    return {
+      ...client,
+      processes: clientProcesses,
+      processCount: clientProcesses.length,
+      totalAmount: clientProcesses.reduce(
+        (sum, process) => sum + (process.processAmountBuy || 0),
+        0
+      ),
+    };
+  });
+
+  // Filter clients based on selected filter
+  const filteredClients = clientsWithProcesses.filter((client) => {
+    if (selectedFilter === "greater") return client;
     if (selectedFilter === "less")
       return client.clientType === "less than 10000";
     return true;
   });
+
+  console.log(filteredClients, "fasfaf");
 
   const totalClients = filteredClients.length;
   const totalProcesses = filteredClients.reduce(
@@ -34,50 +55,28 @@ const GeneralReportTable = ({
     0
   );
 
-  const { userData } = useContext(AppContext);
-
   const handlePrint = () => {
-    window.print(); // Native print dialog; no DOM manipulation needed
+    const originalTitle = document.title;
+    document.title =
+      selectedFilter === "greater" ? "Greater than 10000" : "Less than 10000";
+    window.print();
+    document.title = originalTitle;
   };
 
   const [showProcesses, setShowProcesses] = useState(false);
-  const [SelectedClient, setSelectedClient] = useState("");
+  const [selectedClient, setSelectedClient] = useState("");
 
-  const clientProcesses = generalProcesses.filter(
-    (process) => process.clientId?._id === SelectedClient
+  const clientProcesses = filteredProcesses.filter(
+    (process) => process.clientId?._id === selectedClient
   );
 
   return (
     <div className="rounded-xl border border-gray-200 shadow-sm text-sm bg-white p-4">
       {/* Filter & Print */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4 print:hidden">
-        <div className="flex gap-4">
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              checked={selectedFilter === "less"}
-              onChange={() =>
-                setSelectedFilter((prev) => (prev === "less" ? "" : "less"))
-              }
-              className="accent-blue-600 w-4 h-4"
-            />
-            أقل من 10000
-          </label>
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              checked={selectedFilter === "greater"}
-              onChange={() =>
-                setSelectedFilter((prev) =>
-                  prev === "greater" ? "" : "greater"
-                )
-              }
-              className="accent-blue-600 w-4 h-4"
-            />
-            أكثر من 10000
-          </label>
+        <div className="text-sm font-medium">
+          Showing: {selectedFilter === "greater" ? "> $10,000" : "< $10,000"}
         </div>
-
         <button
           onClick={handlePrint}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
@@ -90,10 +89,16 @@ const GeneralReportTable = ({
       <div ref={tableRef} className="print-area">
         {/* Header Info for Print */}
         <div className="mb-4 text-center hidden print:block">
-          <h2 className="text-lg font-bold mb-1">Client Process Report</h2>
+          <h2 className="text-lg font-bold mb-1">
+            {selectedFilter === "greater"
+              ? "Greater than $10,000"
+              : "Less than $10,000"}
+          </h2>
           <p className="text-sm text-gray-700">
             {startDate && endDate
-              ? `From ${startDate} to ${endDate}`
+              ? `From ${new Date(startDate).toLocaleDateString()} to ${new Date(
+                  endDate
+                ).toLocaleDateString()}`
               : "Full Report"}
           </p>
         </div>
@@ -104,22 +109,24 @@ const GeneralReportTable = ({
             <table className="min-w-full divide-y divide-gray-200 text-left text-xs">
               <thead className="bg-gradient-to-r from-blue-50 to-purple-50 text-gray-600 uppercase tracking-wide">
                 <tr>
-                  <th className="px-3 py-2 border border-black">Client Name</th>
-                  <th className="px-3 py-2 border border-black">Phone</th>
+                  <th className="px-3 py-2 border border-black">إسم العميل</th>
+                  <th className="px-3 py-2 border border-black">رقم الهاتف</th>
                   <th className="px-3 py-2 border border-black">
-                    # of Processes
+                    عدد العمليات
                   </th>
-
-                  <th className="px-3 py-2 border border-black">Employee</th>
+                  <th className="px-3 py-2 border border-black">المجموع</th>
+                  <th className="px-3 py-2 border border-black">
+                    الموظف المسؤول
+                  </th>
                   <th className="px-3 py-2 print:hidden border border-black">
-                    Actions
+                    الإجراءات
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
                 {filteredClients.map(
                   (client) =>
-                    client.processes.length > 0 && (
+                    client.processCount > 0 && (
                       <tr key={client._id} className="hover:bg-gray-50">
                         <td className="px-3 py-2 whitespace-nowrap border border-black">
                           <div className="flex items-center gap-2">
@@ -128,8 +135,8 @@ const GeneralReportTable = ({
                             </div>
                             <div className="text-gray-500 text-xs">
                               {client.clientType === "greater than 10000"
-                                ? "أكثر"
-                                : "أقل"}
+                                ? "> $10K"
+                                : "< $10K"}
                             </div>
                           </div>
                         </td>
@@ -147,19 +154,24 @@ const GeneralReportTable = ({
                             {client.processCount}
                           </span>
                         </td>
-
+                        <td className="px-3 py-2 border border-black">
+                          ${formatWithCommas(client.totalAmount)}
+                        </td>
                         <td className="px-3 py-2 border border-black">
                           {client.employeeId?.username || "N/A"}
                         </td>
                         <td className="px-3 py-2 print:hidden border border-black">
                           <button
+                            disabled={!userData.accessProcesses}
                             onClick={() => {
                               setShowProcesses(true);
                               setSelectedClient(client._id);
                             }}
-                            className="text-blue-600 hover:text-blue-800 font-medium"
+                            className={`text-blue-600 hover:text-blue-800 font-medium ${
+                              !userData.accessProcesses && "cursor-not-allowed"
+                            }`}
                           >
-                            View
+                            عرض
                           </button>
                         </td>
                       </tr>
@@ -171,33 +183,32 @@ const GeneralReportTable = ({
             {/* Summary Section (Print only) */}
             <div className="hidden print:block mt-6 text-sm text-gray-700">
               <p>
-                <strong>Total Clients:</strong> {totalClients}
+                <strong>عدد العملاء:</strong> {totalClients}
               </p>
               <p>
-                <strong>Total Processes:</strong> {totalProcesses}
+                <strong>عدد العمليات:</strong> {totalProcesses}
               </p>
-            </div>
-
-            {/* Signature (Print only) */}
-            <div className="hidden print:block mt-10">
-              <p className="text-sm text-gray-700">Signature:</p>
-              <div className="border-t border-gray-400 w-64 mt-2"></div>
+              <p>
+                <strong>Filter:</strong>{" "}
+                {selectedFilter === "greater" ? "> $10,000" : "< $10,000"}
+              </p>
             </div>
           </div>
         ) : (
-          <p className="text-gray-500 text-sm p-4">No data available.</p>
+          <p className="text-gray-500 text-sm p-4">
+            No data available for the selected filter.
+          </p>
         )}
       </div>
-      {/* fill the actual details for each process and add a function to be able to press on it and open a model that contain the process  to be able to update it  */}
+
+      {/* Process Modal */}
       {showProcesses && (
-        <div>
-          {/* Close Button */}
-          <ProcessModel
-            clientProcesses={clientProcesses}
-            SelectedClient={SelectedClient}
-            onClose={() => setShowProcesses(false)}
-          />
-        </div>
+        <ProcessModel
+          selectedFilter={selectedFilter}
+          clientProcesses={clientProcesses}
+          SelectedClient={selectedClient}
+          onClose={() => setShowProcesses(false)}
+        />
       )}
     </div>
   );

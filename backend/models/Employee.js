@@ -66,6 +66,10 @@ const employeeSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  accessProcesses: {
+    type: Boolean,
+    default: true,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

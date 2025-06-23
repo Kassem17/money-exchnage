@@ -20,6 +20,7 @@ const CreateProcessLess = () => {
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const { addCurrency, loading: currencyLoading } = useAddCurrency();
   const [operation, setOperation] = useState("");
+  const [type, setType] = useState("");
   const [formData, setFormData] = useState({
     amount: "",
     fromCurrency: "USD",
@@ -87,53 +88,83 @@ const CreateProcessLess = () => {
     registrationNumber: "",
   });
   const [isMinGreaterThanMax, setIsMinGreaterThanMax] = useState(false);
+  const [location, setLocation] = useState("processLess");
 
   const { backendUrl, token } = useContext(AppContext);
 
   useEffect(() => {
     const fetchClientData = async () => {
       try {
-        const { data } = await axios.get(
-          backendUrl + "/api/employee/client-less",
+        setLoading(true);
+
+        // Fetch all clients (less than 10000)
+        const { data: clientsData } = await axios.get(
+          `${backendUrl}/api/employee/client-less`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        if (data.success) {
-          setAllClients(data.clients);
+
+        if (clientsData.success) {
+          setAllClients(clientsData.clients);
         }
 
+        // Fetch specific client details if clientId exists
         if (clientId) {
-          const { data } = await axios.get(
-            backendUrl + `/api/employee/get-client/${clientId}`,
+          const { data: clientData } = await axios.get(
+            `${backendUrl}/api/employee/get-client/${clientId}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
           );
-          if (data.success) {
-            setClientData(data.client);
+
+          if (clientData.success) {
+            const client = clientData.client;
+            setClientData(client);
             setFormData((prev) => ({
               ...prev,
-              clientName: data.client.fullname,
-              clientId: data.client._id,
+              clientName: client.fullname,
+              clientId: client._id,
             }));
-            setSearchTerm(data.client.fullname);
+            setSearchTerm(client.fullname);
           }
         }
       } catch (error) {
         console.error("Error fetching client data:", error);
+        // Optionally show error to user
+        // toast.error("Failed to fetch client data");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchClientData();
-    socket.on("client:created", (newClient) => {
-      setClientData(newClient);
-    });
+    // Socket event handler for new client creation
+    const handleClientCreated = (newClient) => {
+      // Update all clients list
+      setAllClients((prevClients) => [...prevClients, newClient]);
 
+      // Only update current client data if it matches the new client
+      if (clientId && newClient._id === clientId) {
+        setClientData(newClient);
+        setFormData((prev) => ({
+          ...prev,
+          clientName: newClient.fullname,
+          clientId: newClient._id,
+        }));
+        setSearchTerm(newClient.fullname);
+      }
+    };
+
+    // Initial data fetch
+    fetchClientData();
+
+    // Set up socket listener
+    socket.on("client:created", handleClientCreated);
+
+    // Cleanup function
     return () => {
-      socket.off("client:created");
+      // Remove only our specific handler
+      socket.off("client:created", handleClientCreated);
     };
   }, [clientId, backendUrl, token]);
 
@@ -169,18 +200,12 @@ const CreateProcessLess = () => {
           if (data.success) {
             const process = data.process;
             setFormData({
-              amount:
-                process.processType === "Buy"
-                  ? process.processAmountBuy
-                  : process.processAmountSell,
+              amount: processAmountBuy,
               fromCurrency: process.fromCurrency,
               toCurrency: process.toCurrency,
               exchangeRate: process.exchangeRate,
-              calculatedAmount:
-                process.processType === "Buy"
-                  ? process.processAmountSell
-                  : process.processAmountBuy,
-              clientName: process.clientName,
+              calculatedAmount: processAmountSell,
+              clientName: process?.clientName,
               clientId: process.clientId,
               moneySource: process.moneySource,
               moneyDestination: process.moneyDestination,
@@ -289,10 +314,24 @@ const CreateProcessLess = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+
+    // Only apply logic to numeric fields
+    if (name === "amount" || name === "exchangeRate") {
+      const raw = value.replace(/,/g, "");
+
+      // Allow empty or valid number input
+      if (!raw || /^\d*\.?\d*$/.test(raw)) {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: raw, // save raw number without commas
+        }));
+      }
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -308,7 +347,7 @@ const CreateProcessLess = () => {
         processAmountSell: formData.calculatedAmount,
         processAmountBuy: formData.amount,
         exchangeRate: formData.exchangeRate,
-        processType: operation === "*" ? "Buy" : "Sell",
+        processType: type === "buy" ? "Buy" : "Sell",
         moneySource: formData.moneySource || "",
         moneyDestination: formData.moneyDestination || "",
         toCurrency: formData.toCurrency,
@@ -571,6 +610,7 @@ const CreateProcessLess = () => {
               setFormData={setFormData}
               handleChange={handleChange}
               operation={operation}
+              setType={setType}
               setOperation={setOperation}
               currenciesData={currenciesData}
               setOpenCurrencyModel={setOpenCurrencyModel}
@@ -578,12 +618,14 @@ const CreateProcessLess = () => {
               customSelectStyles={customSelectStyles}
               formatCurrencyOption={formatCurrencyOption}
               CustomDropdownIndicator={CustomDropdownIndicator}
+              clientData={clientData}
+              location={location}
             />
             {/* Money Source & Destination - Single row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  مصدر الأموال *
+                  مصدر الأموال
                 </label>
                 <div className="relative">
                   <input
@@ -593,14 +635,13 @@ const CreateProcessLess = () => {
                     onChange={handleChange}
                     className="w-full p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500"
                     placeholder="مصدر الأموال"
-                    required
                   />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  وجهة الأموال *
+                  وجهة الأموال
                 </label>
                 <div className="relative">
                   <input
@@ -610,7 +651,6 @@ const CreateProcessLess = () => {
                     onChange={handleChange}
                     className="w-full p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500"
                     placeholder="وجهة الأموال"
-                    required
                   />
                 </div>
               </div>
@@ -667,14 +707,15 @@ const CreateProcessLess = () => {
                       toCurrency: "LBP",
                       exchangeRate: "",
                       calculatedAmount: "",
-                      clientName: "",
-                      clientId: "",
+                      clientName: formData.clientName,
+                      clientId: formData.clientId,
                       moneySource: "",
                       moneyDestination: "",
                       processDate: format(new Date(), "yyyy-MM-dd"),
                       processId: null,
                     });
                     setOperation("");
+                    setSuccessMessage("");
                   }}
                   className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                 >

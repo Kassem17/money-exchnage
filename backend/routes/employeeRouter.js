@@ -15,6 +15,7 @@ import {
   getClientlessThan10000,
   getCurrencies,
   getProcessByClientForReport,
+  getProcessByClientForReportGreater,
   getProcessById,
   makeProcess,
 } from "../controllers/employeeController.js";
@@ -40,6 +41,11 @@ employeeRouter.post(
   "/get-processes-for-report",
   protectRoute,
   getProcessByClientForReport
+);
+employeeRouter.post(
+  "/get-processes-for-report-greater",
+  protectRoute,
+  getProcessByClientForReportGreater
 );
 employeeRouter.delete(
   "/delete-process/:processId",

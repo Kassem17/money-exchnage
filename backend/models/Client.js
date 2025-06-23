@@ -45,12 +45,13 @@ const clientSchema = new mongoose.Schema({
   },
   IDnumber: {
     type: String,
-    required: true,
-    unique: true,
+
+    sparse: true,
+    default: "",
   },
+
   registrationNumber: {
     type: String,
-    required: true,
   },
   nationality: {
     type: String,
@@ -88,18 +89,12 @@ const clientSchema = new mongoose.Schema({
 
   yearlyIncome: {
     type: Number,
-    required: function () {
-      return this.clientType === "greater than 10000";
-    },
   },
 
   financialStatus: {
     type: String,
-    enum: ["good", "bad"],
+    enum: ["good", "bad", "-"],
     default: "good",
-    required: function () {
-      return this.clientType === "greater than 10000";
-    },
   },
 
   banksDealingWith: [
@@ -116,33 +111,15 @@ const clientSchema = new mongoose.Schema({
   },
 });
 
-// Pre-validation hook to enforce conditional logic
-// clientSchema.pre("validate", function (next) {
-//   if (this.clientType === "greater than 10000") {
-//     if (this.yearlyIncome == null) {
-//       return next(
-//         new Error(
-//           "yearlyIncome is required for clients with clientType 'greater than 10000'"
-//         )
-//       );
-//     }
-//     if (!this.financialStatus) {
-//       return next(
-//         new Error(
-//           "financialStatus is required for clients with clientType 'greater than 10000'"
-//         )
-//       );
-//     }
-//     if (!this.banksDealingWith || this.banksDealingWith.length === 0) {
-//       return next(
-//         new Error(
-//           "At least one bank must be provided for clients with clientType 'greater than 10000'"
-//         )
-//       );
-//     }
-//   }
-//   next();
-// });
+clientSchema.pre("save", function (next) {
+  if (this.minimum == null) {
+    this.minimum = 2500;
+  }
+  if (this.maximum == null) {
+    this.maximum = 5000;
+  }
+  next();
+});
 
 const Client = mongoose.model("Client", clientSchema);
 export default Client;

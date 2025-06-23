@@ -22,7 +22,7 @@ const normalizeCurrency = (currency) => {
   return currency === "دولار أمريكي" ? "USD" : currency;
 };
 
-const MakeReport = () => {
+const MakeReportForGreater = () => {
   // Context and state
   const { backendUrl, token, userData } = useContext(AppContext);
   const [allClients, setAllClients] = useState([]);
@@ -33,7 +33,7 @@ const MakeReport = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState("less");
+  const [selectedFilter, setSelectedFilter] = useState("greater");
   const reportRef = useRef();
   const [currencies, setCurrencies] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -96,7 +96,7 @@ const MakeReport = () => {
         if (!token || !userData) return;
 
         const { data } = await axios.get(
-          `${backendUrl}/api/employee/client-less`,
+          `${backendUrl}/api/employee/get-clients`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -128,37 +128,6 @@ const MakeReport = () => {
 
     fetchAllClients();
   }, [token, backendUrl, userData]);
-
-  useEffect(() => {
-    // Filter clients based on search term and selected filter
-    const filtered = allClients.filter((client) => {
-      const matchesSearch =
-        client.fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (client.phoneNumber && client.phoneNumber.includes(searchTerm));
-
-      return matchesSearch;
-    });
-
-    setFilteredClients(filtered);
-  }, [searchTerm, allClients]);
-
-  useEffect(() => {
-    const fetchCurrencies = async () => {
-      try {
-        const { data } = await axios.get(
-          backendUrl + "/api/employee/get-currency"
-        );
-        if (data.success) {
-          setCurrencies(data.currencies);
-        } else {
-          toast.error(data.message);
-        }
-      } catch (error) {
-        console.log(error.message);
-      }
-    };
-    fetchCurrencies();
-  }, [backendUrl]);
   const fetchClientProcesses = async (clientId = selectedClientId) => {
     if (!startDate || !endDate) {
       toast.error("Select a date range first");
@@ -172,7 +141,7 @@ const MakeReport = () => {
 
       if (clientId) {
         response = await axios.post(
-          `${backendUrl}/api/employee/get-processes-for-report`,
+          `${backendUrl}/api/employee/get-processes-for-report-greater`,
           { clientId, startDate, endDate },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -205,6 +174,37 @@ const MakeReport = () => {
   };
 
   useEffect(() => {
+    // Filter clients based on search term and selected filter
+    const filtered = allClients.filter((client) => {
+      const matchesSearch =
+        client.fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (client.phoneNumber && client.phoneNumber.includes(searchTerm));
+
+      return matchesSearch;
+    });
+
+    setFilteredClients(filtered);
+  }, [searchTerm, allClients]); // Added missing dependencies
+
+  useEffect(() => {
+    const fetchCurrencies = async () => {
+      try {
+        const { data } = await axios.get(
+          backendUrl + "/api/employee/get-currency"
+        );
+        if (data.success) {
+          setCurrencies(data.currencies);
+        } else {
+          toast.error(data.message);
+        }
+      } catch (error) {
+        console.log(error.message);
+      }
+    };
+    fetchCurrencies();
+  }, [backendUrl]);
+
+  useEffect(() => {
     const handleProcessEdited = () => {
       console.log("Received process:edited event");
       fetchClientProcesses();
@@ -215,7 +215,7 @@ const MakeReport = () => {
     return () => {
       socket.off("process:edited", handleProcessEdited);
     };
-  }, [startDate, endDate, selectedClientId, fetchClientProcesses]);
+  }, [startDate, endDate, selectedClientId, fetchClientProcesses]); // Added fetchClientProcesses to dependencies
 
   // Handlers
   const handleClientClick = (clientId) => {
@@ -276,7 +276,7 @@ const MakeReport = () => {
     voucherWindow.document.write(`
     <html>
       <head>
-        <title>${selectedClient.fullname} - تقرير  المعاملات </title>
+      <title>${selectedClient.fullname} - تقرير  المعاملات </title>
         <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
         <style>
           @page {
@@ -450,10 +450,11 @@ const MakeReport = () => {
                 <th>التاريخ</th>
                 <th>من</th>
                 <th>إلى</th>
-                <th>من -> إلى</th>
-                
+                                <th>من -> إلى</th>
+
                 <th>المسار</th>
                 <th>النوع</th>
+
               </tr>
             </thead>
             <tbody>
@@ -469,11 +470,11 @@ const MakeReport = () => {
                   } -> ${
                     formatWithCommas(p.processAmountSell?.toFixed(2)) || "0.00"
                   }</td>
-           
-                  <td>${p.moneySource} ${
-                    p.moneyDestination && p.moneySource ? "->" : "لا يوجد"
-                  } ${p.moneyDestination}</td>
-                  <td>${p.processType === "Buy" ? "شراء" : "بيع"}</td>
+                  <td>${p.moneySource} -> ${p.moneyDestination}</td>
+                                    <td>${
+                                      p.processType === "Buy" ? "شراء" : "بيع"
+                                    }</td>
+
                 </tr>`
                 )
                 .join("")}
@@ -490,7 +491,7 @@ const MakeReport = () => {
                     ([cur, amt]) => `
                   <div class="summary-item">
                     <span>${getCurrencyName(cur, currencies)}:</span>
-                    <span>${amt.toFixed(2)}</span>
+                     <span>${formatWithCommas(amt.toFixed(2))}</span>
                   </div>`
                   )
                   .join("")}
@@ -502,7 +503,7 @@ const MakeReport = () => {
                     ([cur, amt]) => `
                   <div class="summary-item">
                     <span>${getCurrencyName(cur, currencies)}:</span>
-                    <span>${formatWithCommas(amt.toFixed(2))}</span>
+                     <span>${formatWithCommas(amt.toFixed(2))}</span>
                   </div>`
                   )
                   .join("")}
@@ -512,30 +513,7 @@ const MakeReport = () => {
                 <div class="summary-item"><span>الإجمالي:</span><span>${formatWithCommas(
                   (usdBuyTotal + usdSellTotal).toFixed(2)
                 )}</span></div>
-                ${
-                  selectedClient
-                    ? `
-                  <div class="summary-item"><span>نسبة المخاطر: </span>
-                    <span class="risk-indicator ${
-                      status === "HIGH"
-                        ? "high-risk"
-                        : status === "MEDIUM"
-                        ? "medium-risk"
-                        : "low-risk"
-                    }">
-                      ${
-                        status === "HIGH"
-                          ? "عالية"
-                          : status === "MEDIUM"
-                          ? "متوسطة"
-                          : "منخفضة"
-                      }
-                    </span>
-                  </div>
-                 
-                `
-                    : ""
-                }
+               
               </div>
             </div>
           </div>
@@ -948,7 +926,7 @@ const MakeReport = () => {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
             <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
               <h4 className="text-sm font-medium text-blue-800 mb-2">
                 Total Buy
@@ -993,69 +971,6 @@ const MakeReport = () => {
                   )
                 )}
               </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-4 rounded-xl border border-blue-100">
-              <h4 className="text-sm font-medium text-gray-800 mb-2">
-                نسبة المخاطر
-              </h4>
-              {totalUSD > 0 ? (
-                <div>
-                  <p className={`text-lg font-bold ${color}`}>
-                    {status === "HIGH" && (
-                      <svg
-                        className="w-5 h-5 inline mr-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 10l7-7m0 0l7 7m-7-7v18"
-                        />
-                      </svg>
-                    )}
-                    {status === "LOW" && (
-                      <svg
-                        className="w-5 h-5 inline mr-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                        />
-                      </svg>
-                    )}
-                    {status === "MEDIUM" && (
-                      <svg
-                        className="w-5 h-5 inline mr-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    )}
-                    {status}
-                  </p>
-                  <div className="mt-2 text-sm text-gray-600">
-                    <p>Amount: ${formatWithCommas(totalUSD.toFixed(2))}</p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-gray-500 text-sm">No USD transactions</p>
-              )}
             </div>
           </div>
 
@@ -1132,6 +1047,7 @@ const MakeReport = () => {
                 <>
                   <div className="overflow-x-auto">
                     {selectedClientId ? (
+                      // Enhanced and clean Transaction Table component
                       // Clean modern alternate design for Transaction Table
                       <section className="overflow-hidden rounded-xl border border-gray-200 shadow-lg bg-white">
                         <div className="overflow-x-auto">
@@ -1282,4 +1198,4 @@ const MakeReport = () => {
   );
 };
 
-export default MakeReport;
+export default MakeReportForGreater;

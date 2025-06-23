@@ -99,6 +99,9 @@ export const addEmployee = async (req, res) => {
       editClient,
       accessClientLess,
       accessClientGreater,
+      editProcess,
+      canDeleteClient,
+      accessProcesses,
     } = req.body;
 
     if (requesterRole !== "admin") {
@@ -122,7 +125,10 @@ export const addEmployee = async (req, res) => {
       createProcessLess === undefined ||
       editClient === undefined ||
       accessClientLess === undefined ||
-      accessClientGreater === undefined
+      accessClientGreater === undefined ||
+      canDeleteClient === undefined ||
+      editProcess === undefined ||
+      accessProcesses === undefined
     ) {
       return res
         .status(400)
@@ -152,6 +158,9 @@ export const addEmployee = async (req, res) => {
       editClient,
       accessClientLess,
       accessClientGreater,
+      canDeleteClient,
+      editProcess,
+      accessProcesses,
     });
 
     await newEmployee.save();
@@ -322,6 +331,9 @@ export const setAdmin = async (req, res) => {
     employee.accessClientGreater = true;
     employee.accessClientLess = true;
     employee.editClient = true;
+    employee.editProcess = true;
+    employee.canDeleteClient = true;
+    employee.accessProcesses = true;
 
     await employee.save();
 
@@ -405,6 +417,9 @@ export const setPermissions = async (req, res) => {
       "accessClientGreater",
       "accessClientLess",
       "editClient",
+      "editProcess",
+      "canDeleteClient",
+      "accessProcesses",
     ];
 
     allPermissions.forEach((perm) => {

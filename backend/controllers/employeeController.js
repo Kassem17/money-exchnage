@@ -36,30 +36,6 @@ export const createClient = async (req, res) => {
       maximum,
     } = req.body;
 
-    // Validate based on clientType
-    if (clientType === "greater than 10000") {
-      if (yearlyIncome == null) {
-        return res.status(400).json({
-          success: false,
-          error: "الدخل السنوي مطلوب لعملاء أكثر من 10000",
-        });
-      }
-
-      if (!["good", "bad"].includes(financialStatus)) {
-        return res.status(400).json({
-          success: false,
-          error: "الحالة المالية يجب أن تكون 'جيدة' أو 'سيئة'",
-        });
-      }
-
-      if (!banksDealingWith || banksDealingWith.length === 0) {
-        return res.status(400).json({
-          success: false,
-          error: "يجب إدخال بنك واحد على الأقل لعملاء أكثر من 10000",
-        });
-      }
-    }
-
     const newClient = new Client({
       employeeId: userId,
       fullname,
@@ -94,7 +70,7 @@ export const createClient = async (req, res) => {
     console.error("Error adding client:", error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error",
+      message: "!يوجد عميل لديه نفس رقم الهاتف الرجاء التحقق منه",
       error: error.message || "Internal server error",
     });
   }
@@ -226,32 +202,6 @@ export const editClient = async (req, res) => {
       return res
         .status(400)
         .json({ success: false, message: "Client ID is required" });
-    }
-
-    const { clientType, yearlyIncome, financialStatus, banksDealingWith } =
-      req.body;
-
-    // Validation
-    if (clientType === "greater than 10000") {
-      if (yearlyIncome == null) {
-        return res.status(400).json({
-          error: "yearlyIncome is required for clientType 'greater than 10000'",
-        });
-      }
-
-      if (!["good", "bad"].includes(financialStatus)) {
-        return res.status(400).json({
-          error:
-            "financialStatus must be either 'good' or 'bad' for clientType 'greater than 10000'",
-        });
-      }
-
-      if (!banksDealingWith || banksDealingWith.length === 0) {
-        return res.status(400).json({
-          error:
-            "At least one bank must be provided for clientType 'greater than 10000'",
-        });
-      }
     }
 
     const updatedClient = await Client.findByIdAndUpdate(
@@ -494,6 +444,53 @@ export const getProcessByClientForReport = async (req, res) => {
         $gte: new Date(startDate),
         $lte: new Date(endDate),
       },
+      processAmountBuy: { $lt: 10000 },
+    }).populate("clientId employeeId");
+
+    if (processes.length === 0) {
+      return res.status(200).json({
+        success: false,
+        message: "No processes found for the given criteria.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Processes fetched successfully.",
+      processes,
+    });
+  } catch (error) {
+    console.error("Error fetching processes for report:", error);
+    res.status(500).json({ success: false, message: "Internal server error." });
+  }
+};
+
+export const getProcessByClientForReportGreater = async (req, res) => {
+  try {
+    const { userId } = req.user;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const { clientId, startDate, endDate } = req.body;
+
+    if (!clientId || !startDate || !endDate) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing required fields." });
+    }
+
+    const processes = await Process.find({
+      clientId: clientId,
+      processDate: {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      },
+      processAmountBuy: { $gte: 10000 },
     }).populate("clientId employeeId");
 
     if (processes.length === 0) {
@@ -680,7 +677,6 @@ export const deleteProcess = async (req, res) => {
         .json({ success: false, message: "Process not found" });
     }
 
-    // Check if the user deleting the process is the one who created it (optional authorization)
     if (String(process.employeeId) !== String(userId)) {
       return res.status(403).json({
         success: false,
@@ -688,13 +684,18 @@ export const deleteProcess = async (req, res) => {
       });
     }
 
-    // Remove the process reference from the client's processes array
     await Client.findByIdAndUpdate(process.clientId, {
       $pull: { processes: process._id },
     });
 
-    // Delete the process
     await Process.findByIdAndDelete(processId);
+
+    // Emit to all connected clients or a specific room
+    io.emit("processDeleted", {
+      processId,
+      clientId: process.clientId,
+      employeeId: process.employeeId,
+    });
 
     return res.status(200).json({
       success: true,

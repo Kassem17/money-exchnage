@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { AppContext } from "../context/AppContext";
 import CreateClient from "../pages/CreateClient";
-import MakeReport from "../pages/MakeReport";
+
 import PermissionsModal from "../components/PermissionModel";
 import CreateProcessGreater from "../pages/ProcessesCreation/CreateProcessGreater";
 import CreateProcessLess from "../pages/ProcessesCreation/CreateProcessLess";
@@ -24,6 +24,8 @@ import image3 from "../assets/image3.png";
 import image4 from "../assets/image4.png";
 import image5 from "../assets/image5.png";
 import currency from "../assets/currency.png";
+import MakeReport from "../pages/MakeReport";
+
 
 const EmployeeMainPage = () => {
   const [modalOpen, setModalOpen] = useState(false);

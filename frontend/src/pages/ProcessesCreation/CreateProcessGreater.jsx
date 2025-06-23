@@ -23,6 +23,7 @@ const CreateProcessGreater = () => {
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const { addCurrency, loading: currencyLoading } = useAddCurrency();
   const [operation, setOperation] = useState("");
+  const [type, setType] = useState("");
   const [formData, setFormData] = useState({
     amount: "",
     fromCurrency: "USD",
@@ -82,7 +83,7 @@ const CreateProcessGreater = () => {
     nationality: "",
     resident: false,
     bornAddress: { country: "", district: "" },
-    clientType: "less than 10000",
+    clientType: "greater than 10000",
     yearlyIncome: "",
     financialStatus: "",
     banksDealingWith: [{ bankName: "" }],
@@ -90,37 +91,45 @@ const CreateProcessGreater = () => {
     registrationNumber: "",
   });
   const [isMinGreaterThanMax, setIsMinGreaterThanMax] = useState(false);
+  const [location, setLocation] = useState("greaterProcess");
 
   const { backendUrl, token } = useContext(AppContext);
 
   useEffect(() => {
     const fetchClientData = async () => {
       try {
-        const { data } = await axios.get(
-          backendUrl + "/api/employee/client-greater",
+        setLoading(true);
+
+        // Fetch all clients
+        const clientsResponse = await axios.get(
+          `${backendUrl}/api/employee/get-clients`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        if (data.success) {
-          setAllClients(data.clients);
+
+        if (clientsResponse.data.success) {
+          setAllClients(clientsResponse.data.clients);
         }
 
+        // Fetch specific client if clientId exists
         if (clientId) {
-          const { data } = await axios.get(
-            backendUrl + `/api/employee/get-client/${clientId}`,
+          const clientResponse = await axios.get(
+            `${backendUrl}/api/employee/get-client/${clientId}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
           );
-          if (data.success) {
-            setClientData(data.client);
+
+          if (clientResponse.data.success) {
+            const client = clientResponse.data.client;
+            setClientData(client);
             setFormData((prev) => ({
               ...prev,
-              clientName: data.client.fullname,
-              clientId: data.client._id,
+              clientName: client.fullname,
+              clientId: client._id,
             }));
-            setSearchTerm(data.client.fullname);
+            setSearchTerm(client.fullname);
           }
         }
       } catch (error) {
@@ -130,13 +139,25 @@ const CreateProcessGreater = () => {
       }
     };
 
-    fetchClientData();
-    socket.on("client:created", (newClient) => {
-      setClientData(newClient);
-    });
+    // Socket event handler for new clients
+    const handleClientCreated = (newClient) => {
+      // Only update if the new client matches our current clientId
+      if (!clientId || newClient._id === clientId) {
+        setClientData(newClient);
+      }
+      // Always update the allClients list
+      setAllClients((prev) => [...prev, newClient]);
+    };
 
+    // Initial data fetch
+    fetchClientData();
+
+    // Set up socket listener
+    socket.on("client:created", handleClientCreated);
+
+    // Cleanup function
     return () => {
-      socket.off("client:created");
+      socket.off("client:created", handleClientCreated);
     };
   }, [clientId, backendUrl, token]);
 
@@ -292,10 +313,24 @@ const CreateProcessGreater = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+
+    // Only apply logic to numeric fields
+    if (name === "amount" || name === "exchangeRate") {
+      const raw = value.replace(/,/g, "");
+
+      // Allow empty or valid number input
+      if (!raw || /^\d*\.?\d*$/.test(raw)) {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: raw, // save raw number without commas
+        }));
+      }
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -416,7 +451,7 @@ const CreateProcessGreater = () => {
         nationality: "",
         resident: false,
         bornAddress: { country: "", district: "" },
-        clientType: "less than 10000",
+        clientType: "greater than 10000",
         yearlyIncome: "",
         financialStatus: "",
         banksDealingWith: [{ bankName: "" }],
@@ -561,6 +596,7 @@ const CreateProcessGreater = () => {
               hightLightedIndex={hightLightedIndex}
               setHighLightedIndex={setHighLightedIndex}
               formData={formData}
+              setType={setType}
               setFormData={setFormData}
               setIsClientModalOpen={setIsClientModalOpen}
               clientData={clientData}
@@ -586,6 +622,7 @@ const CreateProcessGreater = () => {
             setFormData={setFormData}
             handleChange={handleChange}
             operation={operation}
+            setType={setType}
             setOperation={setOperation}
             currenciesData={currenciesData}
             setOpenCurrencyModel={setOpenCurrencyModel}
@@ -593,13 +630,15 @@ const CreateProcessGreater = () => {
             customSelectStyles={customSelectStyles}
             formatCurrencyOption={formatCurrencyOption}
             CustomDropdownIndicator={CustomDropdownIndicator}
+            clientData={clientData}
+            location={location}
           />
 
           {/* Money Source & Destination - Single row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                مصدر الأموال *
+                مصدر الأموال
               </label>
               <div className="relative">
                 <input
@@ -609,14 +648,13 @@ const CreateProcessGreater = () => {
                   onChange={handleChange}
                   className="w-full p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500"
                   placeholder="مصدر الأموال"
-                  required
                 />
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                وجهة الأموال *
+                وجهة الأموال
               </label>
               <div className="relative">
                 <input
@@ -626,7 +664,6 @@ const CreateProcessGreater = () => {
                   onChange={handleChange}
                   className="w-full p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500"
                   placeholder="وجهة الأموال"
-                  required
                 />
               </div>
             </div>
@@ -685,14 +722,15 @@ const CreateProcessGreater = () => {
                     toCurrency: "LBP",
                     exchangeRate: "",
                     calculatedAmount: "",
-                    clientName: "",
-                    clientId: "",
+                    clientName: formData.clientName,
+                    clientId: formData.clientId,
                     moneySource: "",
                     moneyDestination: "",
                     processDate: format(new Date(), "yyyy-MM-dd"),
                     processId: null,
                   });
                   setOperation("");
+                  setSuccessMessage("");
                 }}
                 className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
               >
@@ -756,7 +794,11 @@ const CreateProcessGreater = () => {
                   </div>
                 ) : modalType === "cts" ? (
                   <div>
-                    <CTS formData={formData} onClose={onClose} />
+                    <CTS
+                      formData={formData}
+                      onClose={onClose}
+                      currenciesData={currenciesData}
+                    />
                   </div>
                 ) : null}
               </div>

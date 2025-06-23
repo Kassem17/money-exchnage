@@ -9,7 +9,7 @@ import Employee from "../Employee";
 import { toast } from "react-toastify";
 import AllClients from "../Clients/AllClients";
 import { TbReport } from "react-icons/tb";
-import { FaArrowUp } from "react-icons/fa";
+import { FaArrowDown, FaArrowUp } from "react-icons/fa";
 import { FaArrowDownLong } from "react-icons/fa6";
 
 import empImage from "../../assets/newImage.png";
@@ -19,9 +19,11 @@ import image3 from "../../assets/image3.png";
 import image4 from "../../assets/image4.png";
 import image5 from "../../assets/image5.png";
 import currency from "../../assets/currency.png";
-import MakeReport from "../MakeReport";
+
 import CreateProcessLess from "../ProcessesCreation/CreateProcessLess";
 import CreateProcessGreater from "../ProcessesCreation/CreateProcessGreater";
+import MakeReport from "../MakeReport";
+import MakeReportForGreater from "../MakeReportForGreater";
 
 const links = [
   {
@@ -75,10 +77,17 @@ const links = [
   },
   {
     href: "/make-report",
-    label: "📝 إنشاء تقرير",
+    label: "إنشاء تقرير للعملاء أقل من 10000",
     description: "إنشاء  تقرير شهري أو سنوي",
-    icon: <TbReport className="w-6 h-6 text-yellow-500" />,
+    icon: <FaArrowDown className="w-6 h-6 text-yellow-500" />,
     component: <MakeReport />,
+  },
+  {
+    href: "/make-report-greater",
+    label: "إنشاء تقرير للعملاء أكثر من 10000",
+    description: "إنشاء  تقرير شهري أو سنوي",
+    icon: <FaArrowUp className="w-6 h-6 text-yellow-500" />,
+    component: <MakeReportForGreater />,
   },
 ];
 
