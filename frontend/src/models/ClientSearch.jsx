@@ -160,9 +160,9 @@ const ClientSearch = ({
                 <span className="font-medium text-gray-800">
                   {client.fullname}
                 </span>
-                <span className="text-gray-500">
+                {/* <span className="text-gray-500">
                   {client.clientType === "greater than 10000" ? "أكثر" : "أقل"}
-                </span>
+                </span> */}
                 <span className="text-gray-500 text-xs bg-gray-100 px-2 py-1 rounded-full">
                   {client.phoneNumber}
                 </span>

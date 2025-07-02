@@ -2,9 +2,7 @@ import React, { useContext, useState } from "react";
 import { AppContext } from "../context/AppContext";
 import { toast } from "react-toastify";
 import axios from "axios";
-import io from "socket.io-client";
-
-const socket = io("http://localhost:5000"); // Update this to your backend URL in production
+import { socket } from "../utils/socket";
 
 const useAddCurrency = () => {
   const [loading, setLoading] = useState(false);

@@ -42,8 +42,7 @@ const GeneralReportTable = ({
   // Filter clients based on selected filter
   const filteredClients = clientsWithProcesses.filter((client) => {
     if (selectedFilter === "greater") return client;
-    if (selectedFilter === "less")
-      return client.clientType === "less than 10000";
+    if (selectedFilter === "less") return client;
     return true;
   });
 
@@ -132,11 +131,6 @@ const GeneralReportTable = ({
                           <div className="flex items-center gap-2">
                             <div className="font-medium text-gray-900">
                               {client.fullname}
-                            </div>
-                            <div className="text-gray-500 text-xs">
-                              {client.clientType === "greater than 10000"
-                                ? "> $10K"
-                                : "< $10K"}
                             </div>
                           </div>
                         </td>

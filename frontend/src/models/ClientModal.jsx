@@ -86,7 +86,6 @@ const ClientModal = ({
                 className="w-full text-center px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-purple-500"
                 value={createClientModelData.dateOfBirth}
                 onChange={handleClientDataChange}
-                required
                 type="date"
               />
             </div>
@@ -99,11 +98,10 @@ const ClientModal = ({
                 className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-purple-500"
                 value={createClientModelData.financialStatus}
                 onChange={handleClientDataChange}
-                required
               >
-                <option value="">اختر الحالة</option>
+                <option value="medium">متوسطة</option>
+                <option value="excellent">ممتازة</option>
                 <option value="good">جيدة</option>
-                <option value="bad">سيئة</option>
               </select>
             </div>
             <div>
@@ -116,7 +114,6 @@ const ClientModal = ({
                 className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-purple-500"
                 value={createClientModelData.nationality}
                 onChange={handleClientDataChange}
-                required
               />
             </div>
             <div>
@@ -141,7 +138,6 @@ const ClientModal = ({
                 className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-purple-500"
                 value={createClientModelData.work}
                 onChange={handleClientDataChange}
-                required
               />
             </div>
             <div className="flex items-center gap-1">
@@ -175,7 +171,6 @@ const ClientModal = ({
                   className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
                   value={createClientModelData.currentAddress.country}
                   onChange={handleClientDataChange}
-                  required
                 />
               </div>
               <div>
@@ -189,7 +184,6 @@ const ClientModal = ({
                   className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
                   value={createClientModelData.currentAddress.district}
                   onChange={handleClientDataChange}
-                  required
                 />
               </div>
               <div>
@@ -203,7 +197,6 @@ const ClientModal = ({
                   className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
                   value={createClientModelData.currentAddress.building}
                   onChange={handleClientDataChange}
-                  required
                 />
               </div>
               <div>
@@ -217,7 +210,6 @@ const ClientModal = ({
                   className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
                   value={createClientModelData.currentAddress.street}
                   onChange={handleClientDataChange}
-                  required
                 />
               </div>
             </div>
@@ -313,7 +305,6 @@ const ClientModal = ({
                       className="flex-1 px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500"
                       value={bank.bankName}
                       onChange={(e) => handleBankChange(index, e.target.value)}
-                      required
                     />
                     {createClientModelData.banksDealingWith.length > 1 && (
                       <button
@@ -344,7 +335,6 @@ const ClientModal = ({
                   className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-purple-500"
                   value={createClientModelData.ownerOfEconomicActivity}
                   onChange={handleClientDataChange}
-                  required
                 />
               </div>
               <div>
@@ -357,7 +347,6 @@ const ClientModal = ({
                   className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-purple-500"
                   value={createClientModelData.yearlyIncome}
                   onChange={handleClientDataChange}
-                  required
                 />
               </div>
             </div>

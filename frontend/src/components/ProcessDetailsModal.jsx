@@ -9,9 +9,7 @@ import { toast } from "react-toastify";
 import { AppContext } from "../context/AppContext";
 import { formatDate } from "../utils/formatDate";
 import { formatWithCommas } from "../utils/formatWithComma";
-import { io } from "socket.io-client";
-
-const socket = io("http://localhost:5000");
+import { socket } from "../utils/socket";
 
 const ProcessDetailsModal = ({ process, onClose, userData, employeeData }) => {
   if (!process) return null;

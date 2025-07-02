@@ -3,14 +3,10 @@ import { AppContext } from "../context/AppContext";
 import { toast } from "react-toastify";
 import axios from "axios";
 import GeneralReportTable from "./Reports/GeneralReportTable";
-import io from "socket.io-client";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { formatWithCommas } from "../utils/formatWithComma";
 import { formatDate } from "../utils/formatDate";
-
-// Constants
-const SOCKET_URL = "http://localhost:5000";
-const socket = io(SOCKET_URL);
+import { socket } from "../utils/socket";
 
 const getStatus = (amount, min, max) => {
   if (amount > max) return { status: "HIGH", color: "text-red-600" };
@@ -96,7 +92,7 @@ const MakeReport = () => {
         if (!token || !userData) return;
 
         const { data } = await axios.get(
-          `${backendUrl}/api/employee/client-less`,
+          `${backendUrl}/api/employee/get-clients`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -426,11 +422,7 @@ const MakeReport = () => {
               <div class="detail-item"><span class="detail-label">الاسم:</span> ${
                 selectedClient.fullname
               }</div>
-              <div class="detail-item"><span class="detail-label">النوع:</span> ${
-                selectedClient.clientType === "greater than 10000"
-                  ? "أكثر من 10000"
-                  : "أقل من 10000"
-              }</div>
+             
               <div class="detail-item"><span class="detail-label">الهاتف:</span> ${
                 selectedClient.phoneNumber || "غير متوفر"
               }</div>
@@ -725,11 +717,11 @@ const MakeReport = () => {
                   <span className="font-medium text-gray-800 truncate">
                     {client.fullname}
                   </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">
+                  {/* <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">
                     {client.clientType === "greater than 10000"
                       ? "أكثر"
                       : "أقل"}
-                  </span>
+                  </span> */}
                 </div>
                 <div className="flex items-center text-xs text-gray-500">
                   <svg

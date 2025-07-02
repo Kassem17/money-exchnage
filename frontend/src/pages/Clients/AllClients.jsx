@@ -6,15 +6,13 @@ import { FiPlus, FiTrash2 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { EyeIcon, X } from "lucide-react";
 import { useEditClient } from "../../hooks/useEditClient";
-import io from "socket.io-client";
 import ProcessDetailsModal from "../../components/ProcessDetailsModal";
 import useDeleteClient from "../../hooks/useDeleteClient";
 import { motion } from "framer-motion";
 import { formatWithCommas } from "../../utils/formatWithComma";
 import { formatDate } from "../../utils/formatDate";
 import { IoRemoveCircleSharp } from "react-icons/io5";
-
-const socket = io("http://localhost:5000");
+import { socket } from "../../utils/socket";
 
 const AllClients = () => {
   // Context and hooks
@@ -319,9 +317,9 @@ const AllClients = () => {
             <tr><td>رقم الهاتف</td><td>${
               selectedClient.phoneNumber || "-"
             }</td></tr>
-            <tr><td>تاريخ الميلاد</td><td>${formatDate(
-              selectedClient.dateOfBirth
-            )}</td></tr>
+            <tr><td>تاريخ الميلاد</td><td>${
+              formatDate(selectedClient.dateOfBirth) || "-"
+            }</td></tr>
             <tr><td>الجنسية</td><td>${
               selectedClient.nationality || "-"
             }</td></tr>
@@ -611,12 +609,12 @@ const AllClients = () => {
                         {client.IDnumber ? client.IDnumber : "-"}
                       </td>
                       <td className="px-2 py-1 border text-right">
-                        &#x202B;{client.fullname}&#x202C; -{" "}
-                        <span dir="rtl" className="inline-block">
+                        &#x202B;{client.fullname}&#x202C;
+                        {/* <span dir="rtl" className="inline-block">
                           {client.clientType === "greater than 10000"
                             ? "أكثر"
                             : "أقل"}
-                        </span>
+                        </span> */}
                       </td>
                       <td>{(currentPage - 1) * rowsPerPage + index + 1}</td>
                     </tr>
@@ -834,9 +832,7 @@ const AllClients = () => {
                               />
                             )
                           ) : key === "dateOfBirth" ? (
-                            new Date(
-                              selectedClient.dateOfBirth
-                            ).toLocaleDateString()
+                            formatDate(selectedClient.dateOfBirth)
                           ) : selectedClient[key] ? (
                             selectedClient[key]
                           ) : (
@@ -967,9 +963,11 @@ const AllClients = () => {
                       if (key === "financialStatus") {
                         displayValue =
                           rawValue === "good"
-                            ? "جيد"
-                            : rawValue === "bad"
-                            ? "سيئ"
+                            ? "جيدة"
+                            : rawValue === "medium"
+                            ? "متوسطة"
+                            : rawValue === "excellent"
+                            ? "ممتازة"
                             : "غير محدد";
                       } else if (key === "resident") {
                         displayValue = rawValue ? "نعم" : "لا";
@@ -1024,9 +1022,9 @@ const AllClients = () => {
                                   }
                                   className="bg-white dark:bg-gray-800 text-sm rounded px-2 py-1"
                                 >
-                                  <option value="-">غير محدد</option>
+                                  <option value="medium">متوسطة</option>
                                   <option value="good">جيد</option>
-                                  <option value="bad">سيئ</option>
+                                  <option value="excellent">ممتازة</option>
                                 </select>
                               ) : key === "clientType" ? (
                                 <select

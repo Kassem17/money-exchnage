@@ -3,9 +3,7 @@ import { useContext, useState } from "react";
 import axios from "axios";
 import { AppContext } from "../context/AppContext";
 import { toast } from "react-toastify";
-import io from "socket.io-client";
-
-const socket = io("http://localhost:5000"); // Update this to your backend URL in production
+import { socket } from "../utils/socket";
 
 const useEditProcess = () => {
   const [loading, setLoading] = useState(false);

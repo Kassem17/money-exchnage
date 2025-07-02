@@ -46,7 +46,7 @@ const HomePage = () => {
           <motion.div className="space-y-10" dir="rtl" variants={itemVariants}>
             <motion.div variants={itemVariants}>
               <h1 className="text-5xl md:text-6xl font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600">
-                منصة الصيرفة الأكثر تطورًا لإدارة نسبة المخاطر في الشركة
+                منصة الصيرفة الأكثر تطورًا لإدارة نسبة المخاطر في شركة حيدر -23
               </h1>
               <p className="mt-4 text-lg text-gray-300">
                 حلول مالية مبتكرة لتحويل العملات بكل سهولة وأمان

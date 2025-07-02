@@ -2,9 +2,7 @@ import { useState, useContext } from "react";
 import { AppContext } from "../context/AppContext";
 import { toast } from "react-toastify";
 import axios from "axios";
-import io from "socket.io-client";
-
-const socket = io("http://localhost:5000"); // Update in production
+import { socket } from "../utils/socket";
 
 const useEditCurrency = () => {
   const [loading, setLoading] = useState(false);

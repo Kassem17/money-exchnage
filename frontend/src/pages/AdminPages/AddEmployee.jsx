@@ -3,10 +3,8 @@ import { AppContext } from "../../context/AppContext";
 import axios from "axios";
 import { toast } from "react-toastify";
 import Permissions from "../../components/Permissions";
-import io from "socket.io-client";
 import { EyeOffIcon, EyeIcon } from "lucide-react";
-
-const socket = io("http://localhost:5000");
+import { socket } from "../../utils/socket";
 
 const AddEmployee = () => {
   const [showPassword, setShowPassword] = useState(false);

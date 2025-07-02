@@ -1,9 +1,8 @@
 import { useContext, useState } from "react";
 import { AppContext } from "../context/AppContext";
 import axios from "axios";
-import { io } from "socket.io-client";
+import { socket } from "../utils/socket";
 import { toast } from "react-toastify";
-const socket = io("http://localhost:5000");
 
 export const useEditClient = () => {
   const [loading, setLoading] = useState(false);

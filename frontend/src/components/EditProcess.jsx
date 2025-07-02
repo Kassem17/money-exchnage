@@ -3,13 +3,11 @@ import useEditProcess from "../hooks/useEditProcess";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { AppContext } from "../context/AppContext";
-import io from "socket.io-client";
+import { socket } from "../utils/socket";
 import {
   formatWithCommas,
   formatNumberWithCommas,
 } from "../utils/formatWithComma";
-
-const socket = io("http://localhost:5000");
 
 const EditProcess = ({ process, onClose }) => {
   const { editProcess, loading, error } = useEditProcess();
@@ -99,10 +97,13 @@ const EditProcess = ({ process, onClose }) => {
     e.preventDefault();
     const updated = await editProcess(process._id, {
       ...formData,
+      exchangeRate: String(formData.exchangeRate).replace(/,/g, ""),
+      amount: String(formData.amount).replace(/,/g, ""),
       processType,
       processAmountSell: calculatedValue,
-      processAmountBuy: formData.amount,
+      processAmountBuy: String(formData.amount).replace(/,/g, ""),
     });
+
     if (updated) onClose();
   };
 

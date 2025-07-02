@@ -27,7 +27,7 @@ const clientSchema = new mongoose.Schema({
   },
   dateOfBirth: {
     type: Date,
-    required: true,
+    default: "",
   },
   currentAddress: {
     country: {
@@ -93,8 +93,8 @@ const clientSchema = new mongoose.Schema({
 
   financialStatus: {
     type: String,
-    enum: ["good", "bad", "-"],
-    default: "good",
+    enum: ["good", "medium", "excellent"],
+    default: "medium",
   },
 
   banksDealingWith: [

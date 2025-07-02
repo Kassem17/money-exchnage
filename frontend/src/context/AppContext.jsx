@@ -1,6 +1,7 @@
 import axios from "axios";
 import { createContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { socket } from "../utils/socket";
 
 export const AppContext = createContext();
 

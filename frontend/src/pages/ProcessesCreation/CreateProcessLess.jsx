@@ -7,14 +7,12 @@ import useCreateProcess from "../../hooks/useCreateProcess";
 import useAddCurrency from "../../hooks/useAddCurrency";
 import useCreateClients from "../../hooks/useCreateClients";
 import useEditProcess from "../../hooks/useEditProcess";
-import io from "socket.io-client";
 import StatusMessage from "../../models/StatusMessage";
 import ClientSearch from "../../models/ClientSearch";
 import ConversionForm from "../../models/ConversionForm";
 import CurrencyModal from "../../models/CurrencyModal";
 import ClientModal from "../../models/ClientModal";
-
-const socket = io("http://localhost:5000");
+import { socket } from "../../utils/socket";
 
 const CreateProcessLess = () => {
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
@@ -82,7 +80,7 @@ const CreateProcessLess = () => {
     bornAddress: { country: "", district: "" },
     clientType: "less than 10000",
     yearlyIncome: "",
-    financialStatus: "",
+    financialStatus: "medium",
     banksDealingWith: [{ bankName: "" }],
     ownerOfEconomicActivity: "",
     registrationNumber: "",
@@ -99,7 +97,7 @@ const CreateProcessLess = () => {
 
         // Fetch all clients (less than 10000)
         const { data: clientsData } = await axios.get(
-          `${backendUrl}/api/employee/client-less`,
+          `${backendUrl}/api/employee/get-clients`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -454,7 +452,7 @@ const CreateProcessLess = () => {
         bornAddress: { country: "", district: "" },
         clientType: "less than 10000",
         yearlyIncome: "",
-        financialStatus: "",
+        financialStatus: "medium",
         banksDealingWith: [{ bankName: "" }],
         ownerOfEconomicActivity: "",
         registrationNumber: "",

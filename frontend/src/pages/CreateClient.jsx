@@ -68,7 +68,7 @@ const CreateClient = () => {
     resident: false,
     clientType: "",
     yearlyIncome: "",
-    financialStatus: "-",
+    financialStatus: "medium",
     banksDealingWith: [{ bankName: "" }],
     ownerOfEconomicActivity: "",
     registrationNumber: "",
@@ -188,7 +188,7 @@ const CreateClient = () => {
       resident: false,
       clientType: "",
       yearlyIncome: "",
-      financialStatus: "-",
+      financialStatus: "medium",
       banksDealingWith: [{ bankName: "" }],
       ownerOfEconomicActivity: "",
       registrationNumber: "",
@@ -307,7 +307,6 @@ const CreateClient = () => {
                 value={formData.dateOfBirth}
                 onChange={handleChange}
                 type="date"
-                required
               />
             </div>
             {/* Extra Fields */}
@@ -388,9 +387,9 @@ const CreateClient = () => {
                 value={formData.financialStatus}
                 onChange={handleChange}
                 options={[
-                  { value: "-", label: "غير محدد" },
+                  { value: "medium", label: "متوسطة" },
                   { value: "good", label: "جيدة" },
-                  { value: "bad", label: "سيئة" },
+                  { value: "excellent", label: "ممتازة" },
                 ]}
               />
               {/* ownerOfEconomicActivity */}

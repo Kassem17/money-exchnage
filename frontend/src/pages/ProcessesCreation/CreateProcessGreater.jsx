@@ -7,7 +7,6 @@ import useCreateProcess from "../../hooks/useCreateProcess";
 import useAddCurrency from "../../hooks/useAddCurrency";
 import useCreateClients from "../../hooks/useCreateClients";
 import useEditProcess from "../../hooks/useEditProcess";
-import io from "socket.io-client";
 import StatusMessage from "../../models/StatusMessage";
 import ClientSearch from "../../models/ClientSearch";
 import ConversionForm from "../../models/ConversionForm";
@@ -16,8 +15,7 @@ import ClientModal from "../../models/ClientModal";
 import { ShieldCheck, UserCheck } from "lucide-react";
 import KYC from "../../components/KYC";
 import CTS from "../../components/CTS";
-
-const socket = io("http://localhost:5000");
+import { socket } from "../../utils/socket";
 
 const CreateProcessGreater = () => {
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
@@ -85,7 +83,7 @@ const CreateProcessGreater = () => {
     bornAddress: { country: "", district: "" },
     clientType: "greater than 10000",
     yearlyIncome: "",
-    financialStatus: "",
+    financialStatus: "medium",
     banksDealingWith: [{ bankName: "" }],
     ownerOfEconomicActivity: "",
     registrationNumber: "",
@@ -453,7 +451,7 @@ const CreateProcessGreater = () => {
         bornAddress: { country: "", district: "" },
         clientType: "greater than 10000",
         yearlyIncome: "",
-        financialStatus: "",
+        financialStatus: "medium",
         banksDealingWith: [{ bankName: "" }],
         ownerOfEconomicActivity: "",
         registrationNumber: "",

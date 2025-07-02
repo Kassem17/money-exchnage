@@ -16,9 +16,7 @@ import { MdLoop } from "react-icons/md";
 import { toast } from "react-toastify";
 import { CiViewList } from "react-icons/ci";
 import PermissionSetModel from "../components/PermissionSetModel";
-import io from "socket.io-client";
-
-const socket = io("http://localhost:5000"); // Update this to your backend URL in production
+import { socket } from "../utils/socket";
 
 const Employee = () => {
   const [employees, setEmployees] = useState([]);
