@@ -142,7 +142,6 @@ const CTS = ({ formData, onClose, currenciesData }) => {
       if (result.success) {
         setClient(result.client);
         setIsEditing(false);
-        toast.success("تم تحديث بيانات العميل بنجاح");
       } else {
         toast.error("فشل في تحديث البيانات");
       }
@@ -154,6 +153,11 @@ const CTS = ({ formData, onClose, currenciesData }) => {
   };
 
   const clientName = client?.fullname || "العميل";
+
+  const [signatures, setSignatures] = useState({
+    date: "",
+    fullName: "",
+  });
 
   return (
     <div
@@ -305,16 +309,27 @@ const CTS = ({ formData, onClose, currenciesData }) => {
           {/* Signatures */}
           <div className="flex justify-end mt-6 print:mt-8 break-inside-avoid">
             <div className="w-64 space-y-6 print:space-y-3 text-sm">
-              <div className="flex">
+              <div className="flex  items-center">
                 <span className="font-semibold">التاريخ:</span>
-                <span className="mr-10 font-normal">
-                  {formData?.processDate
-                    ? formatDate(formData.processDate)
-                    : "لا يوجد"}
-                </span>
+                <input
+                  type="date"
+                  value={signatures.date}
+                  onChange={(e) =>
+                    setSignatures({ ...signatures, date: e.target.value })
+                  }
+                  className="border-b mr-2 border-gray-400 px-1 w-32 text-center"
+                />
               </div>
-              <div className="flex justify-between">
-                <span className="font-semibold">الاسم الثلاثي:</span>
+              <div className="flex  items-center">
+                <span className="font-semibold text-nowrap">الاسم الثلاثي:</span>
+                <input
+                  type="text"
+                  value={signatures.fullName}
+                  onChange={(e) =>
+                    setSignatures({ ...signatures, fullName: e.target.value })
+                  }
+                  className="mr-2  px-1 w-full"
+                />
               </div>
               <div className="flex justify-between">
                 <span className="font-semibold">التوقيع:</span>
@@ -371,6 +386,9 @@ const CTS = ({ formData, onClose, currenciesData }) => {
               overflow: hidden !important;
               height: 100% !important;
             }
+                 input[type="date"]::-webkit-calendar-picker-indicator {
+              display: none;
+                      }
             .no-print {
               display: none !important;
             }

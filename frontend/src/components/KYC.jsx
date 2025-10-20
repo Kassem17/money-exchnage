@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import axios from "axios";
 import { formatWithCommas } from "../utils/formatWithComma";
 import { useEditClient } from "../hooks/useEditClient";
+import { socket } from "../utils/socket";
 
 const KYC = ({ formData, onClose }) => {
   const { backendUrl, token } = useContext(AppContext);
@@ -183,12 +184,16 @@ const KYC = ({ formData, onClose }) => {
       if (result.success) {
         setClient(result.client);
         setIsEditing(false);
-        toast.success("تم تحديث بيانات العميل بنجاح");
       }
     } catch (error) {
       toast.error("فشل في تحديث البيانات: " + error.message);
     }
   };
+
+  const [signatures, setSignatures] = useState({
+    date: "",
+    fullName: "",
+  });
 
   return (
     <div
@@ -500,13 +505,31 @@ const KYC = ({ formData, onClose }) => {
           </div>
 
           {/* Signatures */}
-          <div className="flex justify-end mt-6 print:mt-6 break-inside-avoid">
+          <div className="flex justify-end mt-6 print:mt-8 break-inside-avoid">
             <div className="w-64 space-y-6 print:space-y-3 text-sm">
-              <div className="flex justify-between">
+              <div className="flex  items-center">
                 <span className="font-semibold">التاريخ:</span>
+                <input
+                  type="date"
+                  value={signatures.date}
+                  onChange={(e) =>
+                    setSignatures({ ...signatures, date: e.target.value })
+                  }
+                  className="border-b mr-2 border-gray-400 px-1 w-32 text-center"
+                />
               </div>
-              <div className="flex justify-between">
-                <span className="font-semibold">الاسم الثلاثي:</span>
+              <div className="flex  items-center">
+                <span className="font-semibold text-nowrap">
+                  الاسم الثلاثي:
+                </span>
+                <input
+                  type="text"
+                  value={signatures.fullName}
+                  onChange={(e) =>
+                    setSignatures({ ...signatures, fullName: e.target.value })
+                  }
+                  className="mr-2  px-1 w-full"
+                />
               </div>
               <div className="flex justify-between">
                 <span className="font-semibold">التوقيع:</span>
@@ -533,6 +556,9 @@ const KYC = ({ formData, onClose }) => {
               overflow: hidden !important;
               height: 100% !important;
             }
+              input[type="date"]::-webkit-calendar-picker-indicator {
+              display: none;
+                      }
 
             .no-print {
               display: none !important;

@@ -25,7 +25,7 @@ import image4 from "../assets/image4.png";
 import image5 from "../assets/image5.png";
 import currency from "../assets/currency.png";
 import MakeReport from "../pages/MakeReport";
-
+import MakeReportForGreater from "../pages/MakeReportForGreater";
 
 const EmployeeMainPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -70,6 +70,8 @@ const EmployeeMainPage = () => {
         return <AllClients />;
       case "make-report":
         return <MakeReport />;
+      case "make-report-greater":
+        return <MakeReportForGreater />;
       default:
         return (
           <div className="h-full w-full flex items-center justify-center p-6 relative overflow-hidden -mt-16 bg-gray-100">
@@ -177,8 +179,14 @@ const EmployeeMainPage = () => {
     {
       key: "make-report",
       label: "إنشاء تقرير",
-      icon: <FileText className="w-5 h-5" />,
+      icon: <ArrowDown className="w-5 h-5" />,
       active: activePage === "make-report",
+    },
+    {
+      key: "make-report-greater",
+      label: "إنشاء تقرير",
+      icon: <ArrowUp className="w-5 h-5" />,
+      active: activePage === "make-report-greater",
     },
   ];
 
@@ -187,9 +195,12 @@ const EmployeeMainPage = () => {
       {/* Sidebar */}
       <div className="w-64 bg-white border-r border-gray-200 p-4 flex flex-col">
         <div className="mb-8">
-          <h1 className="text-xl font-bold text-indigo-700">لوحة الموظف</h1>
-          <div className="flex items-center mt-2">
-            <div className="mr-3 flex gap-2" dir="rtl">
+          <h1 className="text-xl font-bold text-center text-indigo-700">
+            لوحة الموظف
+          </h1>
+
+          <div className="flex items-center text-center justify-center mt-4">
+            <div className="mr-3 flex gap-2 " dir="rtl">
               <p className="font-medium text-gray-800">{userData.username}</p>
               <span className="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
                 {userData.role === "employee" ? "موظف" : userData.role}
@@ -210,7 +221,7 @@ const EmployeeMainPage = () => {
                   : "text-gray-600 hover:bg-indigo-50 hover:text-indigo-700"
               } ${item.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
             >
-              <div className="flex items-center">
+              <div className="flex items-center gap-3">
                 <span className="ml-3">{item.icon}</span>
                 <span>{item.label}</span>
               </div>

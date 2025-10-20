@@ -1,9 +1,8 @@
 import express from "express";
-import { login, resetPassword } from "../controllers/authController.js";
-import protectRoute from "../middleware/protectRoute.js";
+import { login, register, resetPassword } from "../controllers/authController.js";
 
 const authRouter = express.Router();
 authRouter.post("/login", login);
 authRouter.post("/reset-password", resetPassword);
-
+authRouter.post("/register", register);
 export default authRouter;

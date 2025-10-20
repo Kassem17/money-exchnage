@@ -187,11 +187,18 @@ export const editClient = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Client ID is required" });
 
-    const updatedClient = await Client.findByIdAndUpdate(
+    // Update client
+    await Client.findByIdAndUpdate(
       clientId,
       { ...req.body, employeeId: userId },
-      { new: true, runValidators: true }
+      { runValidators: true }
     );
+
+    // Re-fetch with population
+    const updatedClient = await Client.findById(clientId)
+      .populate("employeeId")
+      .populate("processes");
+
     if (!updatedClient)
       return res
         .status(404)

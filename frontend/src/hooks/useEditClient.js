@@ -21,8 +21,7 @@ export const useEditClient = () => {
       );
 
       if (data.success) {
-        socket.emit("client:updated", data.client);
-        toast.success(data.message);
+        toast.success("تم تحديث بيانات العميل بنجاح");
         return { success: true, client: data.client };
       }
       throw new Error(data.message || "Update failed");

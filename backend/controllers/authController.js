@@ -93,3 +93,53 @@ export const resetPassword = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
+export const register = async (req, res) => {
+  try {
+    const { username, password, phoneNumber } = req.body;
+
+    // Basic validation
+    if (!username || !password || !phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters long",
+      });
+    }
+
+    // Create the employee
+    const employee = await Employee.create({
+      username,
+      password, // ⚠️ Ideally hash before saving
+      phoneNumber,
+    });
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: employee._id, role: employee.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.status(201).json({
+      success: true,
+      token,
+      user: {
+        username: employee.username,
+        phoneNumber: employee.phoneNumber,
+      },
+    });
+  } catch (error) {
+    console.error("Register error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};

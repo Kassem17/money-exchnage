@@ -33,8 +33,8 @@ const AllClients = () => {
   // Modal states
   const [selectedProcess, setSelectedProcess] = useState(null);
   const [showProcessModal, setShowProcessModal] = useState(false);
-  const [selectedBanks, setSelectedBanks] = useState([]);
-  const [showBanksModal, setShowBanksModal] = useState(false);
+  // const [selectedBanks, setSelectedBanks] = useState([]);
+  // const [showBanksModal, setShowBanksModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
   const [showClientModal, setShowClientModal] = useState(false);
   const [selectedClientProcesses, setSelectedClientProcesses] = useState([]);
@@ -82,16 +82,15 @@ const AllClients = () => {
     };
 
     const handleClientUpdated = (updatedClient) => {
-      setUserData((prev) =>
-        prev.map((client) =>
-          client._id === updatedClient._id ? updatedClient : client
-        )
-      );
-      setFilteredData((prev) =>
-        prev.map((client) =>
-          client._id === updatedClient._id ? updatedClient : client
-        )
-      );
+      setUserData((prev) => {
+        const otherClients = prev.filter((c) => c._id !== updatedClient._id);
+        return [...otherClients, updatedClient]; // replace forcibly
+      });
+
+      setFilteredData((prev) => {
+        const otherClients = prev.filter((c) => c._id !== updatedClient._id);
+        return [...otherClients, updatedClient];
+      });
     };
 
     const handleProcessDeleted = ({ processId, clientId }) => {
@@ -158,16 +157,16 @@ const AllClients = () => {
     }
   }, [searchTerm, userData]);
 
-  // Helper functions
-  const handleProcessClick = (process) => {
-    setSelectedProcess(process);
-    setShowProcessModal(true);
-  };
+  // // Helper functions
+  // const handleProcessClick = (process) => {
+  //   setSelectedProcess(process);
+  //   setShowProcessModal(true);
+  // };
 
-  const handleBanksClick = (banks) => {
-    setSelectedBanks(banks || []);
-    setShowBanksModal(true);
-  };
+  // const handleBanksClick = (banks) => {
+  //   setSelectedBanks(banks || []);
+  //   setShowBanksModal(true);
+  // };
 
   const handleClientInfoClick = (client) => {
     setSelectedClient(client);
@@ -808,8 +807,9 @@ const AllClients = () => {
                                 type="date"
                                 className="bg-white dark:bg-gray-800 text-sm rounded px-2 py-1"
                                 value={
-                                  editableClient.dateOfBirth?.split("T")[0] ||
-                                  ""
+                                  editableClient.dateOfBirth
+                                    ? editableClient.dateOfBirth.split("T")[0]
+                                    : ""
                                 }
                                 onChange={(e) =>
                                   setEditableClient({
@@ -832,7 +832,11 @@ const AllClients = () => {
                               />
                             )
                           ) : key === "dateOfBirth" ? (
-                            formatDate(selectedClient.dateOfBirth)
+                            selectedClient.dateOfBirth ? (
+                              formatDate(selectedClient.dateOfBirth)
+                            ) : (
+                              "-"
+                            )
                           ) : selectedClient[key] ? (
                             selectedClient[key]
                           ) : (

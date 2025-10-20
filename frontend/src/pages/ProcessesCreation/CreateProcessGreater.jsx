@@ -147,15 +147,30 @@ const CreateProcessGreater = () => {
       setAllClients((prev) => [...prev, newClient]);
     };
 
+    const handleClientUpdated = (updatedClient) => {
+      setUserData((prev) =>
+        prev.map((client) =>
+          client._id === updatedClient._id ? updatedClient : client
+        )
+      );
+      setFilteredData((prev) =>
+        prev.map((client) =>
+          client._id === updatedClient._id ? updatedClient : client
+        )
+      );
+    };
+
     // Initial data fetch
     fetchClientData();
 
     // Set up socket listener
     socket.on("client:created", handleClientCreated);
+    socket.on("client:updated", handleClientUpdated);
 
     // Cleanup function
     return () => {
       socket.off("client:created", handleClientCreated);
+      socket.off("client:updated", handleClientUpdated);
     };
   }, [clientId, backendUrl, token]);
 

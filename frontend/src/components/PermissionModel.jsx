@@ -1,3 +1,4 @@
+import { Check, X } from "lucide-react";
 import React from "react";
 
 export default function PermissionsModal({ userData, isOpen, onClose }) {
@@ -13,7 +14,7 @@ export default function PermissionsModal({ userData, isOpen, onClose }) {
     { name: "الوصول إلى عملاء أكثر من 10000", key: "accessClientGreater" },
     { name: "تعديل العمليات", key: "editProcess" },
     { name: "مسح بيانات العميل", key: "canDeleteClient" },
-    { name: "الوصول إلى العمليات", key: "accessProcesses" }
+    { name: "الوصول إلى العمليات", key: "accessProcesses" },
   ];
 
   return (
@@ -36,8 +37,19 @@ export default function PermissionsModal({ userData, isOpen, onClose }) {
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 transition-colors"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -47,27 +59,42 @@ export default function PermissionsModal({ userData, isOpen, onClose }) {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   الصلاحية
                 </th>
-                <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   الحالة
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {permissions.map((permission) => (
-                <tr key={permission.key} className="hover:bg-gray-50 transition-colors">
+                <tr
+                  key={permission.key}
+                  className="hover:bg-gray-50 transition-colors"
+                >
                   <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                     {permission.name}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-center">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      userData[permission.key] 
-                        ? "bg-green-100 text-green-800" 
-                        : "bg-red-100 text-red-800"
-                    }`}>
-                      {userData[permission.key] ? "مفعّل" : "غير مفعّل"}
+                    <span
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        userData[permission.key]
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {userData[permission.key] ? (
+                        <Check className="w-4 h-4" />
+                      ) : (
+                        <X className="w-4 h-4 text-red-500" />
+                      )}
                     </span>
                   </td>
                 </tr>
