@@ -94,6 +94,7 @@ export const resetPassword = async (req, res) => {
   }
 };
 
+
 export const register = async (req, res) => {
   try {
     const { username, password, phoneNumber } = req.body;
@@ -116,7 +117,7 @@ export const register = async (req, res) => {
     // Create the employee
     const employee = await Employee.create({
       username,
-      password, // ⚠️ Ideally hash before saving
+      password,
       phoneNumber,
     });
 
