@@ -198,7 +198,7 @@ Since the application is an intricate operational dashboard and management tool,
 
 ## 🖼️ Screenshots
 
-<img src="https://placehold.co/800x450/2d2d4d/ffffff?text=App+Screenshot+1:+Login+and+Authentication" alt="App Screenshot 1" width="100%">
+<img src="[https://placehold.co/800x450/2d2d4d/ffffff?text=App+Screenshot+1:+Login+and+Authentication](https://kommodo.ai/i/Y1qTeiV7xI4mxw64dfWI)" alt="App Screenshot 1" width="100%">
 <em><p align="center">Secure Login Interface showcasing the professional UI/UX for user authentication.</p></em>
 
 <img src="https://placehold.co/800x450/2d2d4d/ffffff?text=App+Screenshot+2:+Employee+Main+Dashboard" alt="App Screenshot 2" width="100%">
