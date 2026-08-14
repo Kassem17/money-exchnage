@@ -8,25 +8,7 @@
   <img alt="License" src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge">
   <img alt="Contributions" src="https://img.shields.io/badge/Contributions-Welcome-orange?style=for-the-badge">
 </p>
-<!-- 
-  **Note:** These are static placeholder badges. Replace them with your project's actual live badges.
-  You can generate your own at https://shields.io
--->
 
-## 📜 Table of Contents
-
-- [Overview](#-overview)
-- [Key Features](#-key-features)
-- [Tech Stack & Architecture](#-tech-stack--architecture)
-- [Data Models](#-data-models)
-- [Project Structure](#-project-structure)
-- [Demo & Screenshots](#-demo--screenshots)
-- [Getting Started](#-getting-started)
-- [Usage](#-usage)
-- [Contributing](#-contributing)
-- [License](#-license)
-
----
 
 ## 🧭 Overview
 
@@ -210,13 +192,16 @@ The project follows a standard monorepo structure, dividing the frontend (React 
 
 ---
 
+<!-- 
+
+
 ## 📸 Demo & Screenshots
 
 Since the application is an intricate operational dashboard and management tool, its value is best demonstrated through visual context of the main administrative and employee interfaces, as well as the specialized reporting views.
 
 ## 🖼️ Screenshots
 
-<img src="https://placehold.co/800x450/2d2d4d/ffffff?text=App+Screenshot+1:+Login+and+Authentication" alt="App Screenshot 1" width="100%">
+<img src="[https://placehold.co/800x450/2d2d4d/ffffff?text=App+Screenshot+1:+Login+and+Authentication](https://kommodo.ai/i/Y1qTeiV7xI4mxw64dfWI)" alt="App Screenshot 1" width="100%">
 <em><p align="center">Secure Login Interface showcasing the professional UI/UX for user authentication.</p></em>
 
 <img src="https://placehold.co/800x450/2d2d4d/ffffff?text=App+Screenshot+2:+Employee+Main+Dashboard" alt="App Screenshot 2" width="100%">
@@ -235,7 +220,7 @@ Since the application is an intricate operational dashboard and management tool,
 <em><p align="center">Admin interface for updating currency exchange rates (CurrencyModal.jsx) in real time.</p></em>
 
 ---
-
+-->
 ## 🚀 Getting Started
 
 This guide outlines the steps necessary to set up and run the **Money exchange** application locally. This project requires separate setup for the backend Express server and the frontend React application.
@@ -415,9 +400,7 @@ Feel free to open an issue for any questions or concerns regarding development, 
 
 ---
 
-## 📝 License
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for complete details.
 
 ### What this means:
 
@@ -430,7 +413,5 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ---
 
-<p align="center">Made with ❤️ by the Money exchange Team</p>
-<p align="center">
-  <a href="#">⬆️ Back to Top</a>
-</p>
+<p align="center">Made with Kassem Haidar</p>
+
