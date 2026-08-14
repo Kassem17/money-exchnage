@@ -8,12 +8,7 @@
   <img alt="License" src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge">
   <img alt="Contributions" src="https://img.shields.io/badge/Contributions-Welcome-orange?style=for-the-badge">
 </p>
-<!-- 
-  **Note:** These are static placeholder badges. Replace them with your project's actual live badges.
-  You can generate your own at https://shields.io
---
 
----
 
 ## 🧭 Overview
 
