@@ -11,20 +11,7 @@
 <!-- 
   **Note:** These are static placeholder badges. Replace them with your project's actual live badges.
   You can generate your own at https://shields.io
--->
-
-## 📜 Table of Contents
-
-- [Overview](#-overview)
-- [Key Features](#-key-features)
-- [Tech Stack & Architecture](#-tech-stack--architecture)
-- [Data Models](#-data-models)
-- [Project Structure](#-project-structure)
-- [Demo & Screenshots](#-demo--screenshots)
-- [Getting Started](#-getting-started)
-- [Usage](#-usage)
-- [Contributing](#-contributing)
-- [License](#-license)
+--
 
 ---
 
@@ -415,9 +402,7 @@ Feel free to open an issue for any questions or concerns regarding development, 
 
 ---
 
-## 📝 License
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for complete details.
 
 ### What this means:
 
@@ -430,7 +415,5 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ---
 
-<p align="center">Made with ❤️ by the Money exchange Team</p>
-<p align="center">
-  <a href="#">⬆️ Back to Top</a>
-</p>
+<p align="center">Made with Kassem Haidar</p>
+
