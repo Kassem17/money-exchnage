@@ -192,6 +192,9 @@ The project follows a standard monorepo structure, dividing the frontend (React 
 
 ---
 
+<!-- 
+
+
 ## 📸 Demo & Screenshots
 
 Since the application is an intricate operational dashboard and management tool, its value is best demonstrated through visual context of the main administrative and employee interfaces, as well as the specialized reporting views.
@@ -217,7 +220,7 @@ Since the application is an intricate operational dashboard and management tool,
 <em><p align="center">Admin interface for updating currency exchange rates (CurrencyModal.jsx) in real time.</p></em>
 
 ---
-
+-->
 ## 🚀 Getting Started
 
 This guide outlines the steps necessary to set up and run the **Money exchange** application locally. This project requires separate setup for the backend Express server and the frontend React application.
