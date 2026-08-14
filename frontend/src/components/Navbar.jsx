@@ -1,39 +1,38 @@
 import { useNavigate } from "react-router-dom";
-import logo from "../../public/logo.png";
+import { LogOut, LayoutDashboard } from "lucide-react";
 
 const Navbar = () => {
   const navigate = useNavigate();
 
-  return (
-    <nav className="bg-blue-600 shadow-sm p-1 ">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-12">
-          {/* Logo */}
-          <div
-            onClick={() => navigate("/")}
-            className="flex  mb-3 items-center gap-1 text-white cursor-pointer"
-          >
-            <span className="text-lg font-bold">
-              <img
-                className="w-8 h-8 rounded-full bg-yellow-300 mr-2"
-                src={logo}
-                alt=""
-              />
-            </span>
-            <span className="text-base font-semibold tracking-wide">
-              صيرفة{" "}
-            </span>
-          </div>
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+  };
 
-          {/* Logout Button */}
+  return (
+    <nav
+      id="navbar-print-hide"
+      className="sticky top-0 z-40 border-b border-surface-200 bg-white/95 backdrop-blur-sm shadow-nav"
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-14">
           <button
-            onClick={() => {
-              localStorage.removeItem("token");
-              window.location.href = "/login";
-            }}
-            className="bg-white mb-3 text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md shadow hover:bg-blue-100 transition"
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2 text-surface-800 hover:text-primary-600 transition"
+            aria-label="الصفحة الرئيسية"
           >
-            تسجيل الخروج
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-100 text-primary-600">
+              <LayoutDashboard className="h-5 w-5" />
+            </div>
+            <span className="text-lg font-bold tracking-tight">صيرفة</span>
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className="btn-secondary flex items-center gap-2"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>تسجيل الخروج</span>
           </button>
         </div>
       </div>

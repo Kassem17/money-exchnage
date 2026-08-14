@@ -50,5 +50,9 @@ const processSchema = new mongoose.Schema({
   },
 });
 
+processSchema.index({ processDate: 1 });
+processSchema.index({ clientId: 1, processDate: 1 });
+processSchema.index({ processAmountBuy: 1 });
+
 const Process = mongoose.model("Process", processSchema);
 export default Process;

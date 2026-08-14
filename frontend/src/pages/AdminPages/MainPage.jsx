@@ -1,259 +1,216 @@
-import React, { useContext, useEffect, useState } from "react";
-import { Building2, Users, UserPlus } from "lucide-react";
+import React, { useContext, useEffect, useState, useMemo } from "react";
+import {
+  Building2,
+  Users,
+  UserPlus,
+  FileText,
+  ArrowUp,
+  ArrowDown,
+  LayoutDashboard,
+  ChevronLeft,
+} from "lucide-react";
 import { AppContext } from "../../context/AppContext";
-import axios from "axios";
-
 import CreateClient from "../CreateClient";
 import CreateCompany from "../CreateCompany";
 import Employee from "../Employee";
-import { toast } from "react-toastify";
 import AllClients from "../Clients/AllClients";
-import { TbReport } from "react-icons/tb";
-import { FaArrowDown, FaArrowUp } from "react-icons/fa";
-import { FaArrowDownLong } from "react-icons/fa6";
+import CreateProcessLess from "../ProcessesCreation/CreateProcessLess";
+import CreateProcessGreater from "../ProcessesCreation/CreateProcessGreater";
+import MakeReport from "../MakeReport";
+import MakeReportForGreater from "../MakeReportForGreater";
 
+import currency from "../../assets/currency.png";
 import empImage from "../../assets/newImage.png";
 import image1 from "../../assets/image1.png";
 import image2 from "../../assets/image2.png";
 import image3 from "../../assets/image3.png";
 import image4 from "../../assets/image4.png";
 import image5 from "../../assets/image5.png";
-import currency from "../../assets/currency.png";
-
-import CreateProcessLess from "../ProcessesCreation/CreateProcessLess";
-import CreateProcessGreater from "../ProcessesCreation/CreateProcessGreater";
-import MakeReport from "../MakeReport";
-import MakeReportForGreater from "../MakeReportForGreater";
 
 const links = [
-  {
-    href: "/",
-    label: "الصفحة الرئيسية",
-    description: "العودة إلى الصفحة الرئيسية",
-    icon: <Building2 className="w-6 h-6 text-indigo-500" />,
-    component: null,
-  },
-  {
-    href: "/create-client",
-    label: "إنشاء عميل",
-    description: "الوصول إلى وحدة إنشاء عميل",
-    icon: <UserPlus className="w-6 h-6 text-cyan-600" />,
-    component: <CreateClient />,
-  },
-  {
-    href: "/create-process-less",
-    label: "إنشاء عملية",
-    description: "إنشاء  عملية أقل من 10000",
-    icon: <FaArrowDownLong className="w-6 h-6 text-yellow-500" />,
-    component: <CreateProcessLess />,
-  },
-  {
-    href: "/create-process-greater",
-    label: "إنشاء عملية",
-    description: "إنشاء  عملية أكثر من 10000",
-    icon: <FaArrowUp className="w-6 h-6 text-yellow-500" />,
-    component: <CreateProcessGreater />,
-  },
-  {
-    href: "/create-company",
-    label: "إدخال معلومات الشركة",
-    description: "الوصول إلى وحدة معلومات الشركة",
-    icon: <Building2 className="w-6 h-6 text-green-600" />,
-    component: <CreateCompany />,
-  },
-  {
-    href: "/clients",
-    label: "قائمة العملاء",
-    description: "الوصول إلى العملاء الأعلى دخلًا",
-    icon: <Users className="w-6 h-6 text-purple-600" />,
-    component: <AllClients />,
-  },
-  {
-    href: "/employee",
-    label: "إدارة الموظفين",
-    description: "الوصول إلى وحدة الموظفين",
-    icon: <UserPlus className="w-6 h-6 text-yellow-500" />,
-    component: <Employee />,
-  },
-  {
-    href: "/make-report",
-    label: "إنشاء تقرير للعملاء أقل من 10000",
-    description: "إنشاء  تقرير شهري أو سنوي",
-    icon: <FaArrowDown className="w-6 h-6 text-yellow-500" />,
-    component: <MakeReport />,
-  },
-  {
-    href: "/make-report-greater",
-    label: "إنشاء تقرير للعملاء أكثر من 10000",
-    description: "إنشاء  تقرير شهري أو سنوي",
-    icon: <FaArrowUp className="w-6 h-6 text-yellow-500" />,
-    component: <MakeReportForGreater />,
-  },
+  { href: "/", label: "الصفحة الرئيسية", icon: LayoutDashboard },
+  { href: "/create-client", label: "إنشاء عميل", icon: UserPlus },
+  { href: "/create-process-less", label: "عملية أقل من 10000", icon: ArrowDown },
+  { href: "/create-process-greater", label: "عملية أكثر من 10000", icon: ArrowUp },
+  { href: "/create-company", label: "معلومات الشركة", icon: Building2 },
+  { href: "/clients", label: "قائمة العملاء", icon: Users },
+  { href: "/employee", label: "إدارة الموظفين", icon: UserPlus },
+  { href: "/make-report", label: "تقرير أقل من 10000", icon: FileText },
+  { href: "/make-report-greater", label: "تقرير أكثر من 10000", icon: FileText },
 ];
 
 const MainPage = () => {
-  const { userData, backendUrl, token } = useContext(AppContext);
-  const [companyData, setCompanyData] = useState({});
-
+  const { userData, company: companyFromContext } = useContext(AppContext);
   const [activeHref, setActiveHref] = useState(() => {
     return localStorage.getItem("activeHref") || "/";
   });
+
+  const activeLink = useMemo(
+    () => links.find((l) => l.href === activeHref),
+    [activeHref]
+  );
 
   useEffect(() => {
     localStorage.setItem("activeHref", activeHref);
   }, [activeHref]);
 
-  const activeComponent =
-    links.find((link) => link.href === activeHref)?.component || null;
-
-  useEffect(() => {
-    const fetchCompanyData = async () => {
-      try {
-        const { data } = await axios.get(backendUrl + "/api/admin/get-company");
-        if (data.success) {
-          setCompanyData(data.company);
-        } else {
-          toast.error(data.error || "فشل في جلب بيانات الشركة");
-        }
-      } catch (error) {
-        toast.error(error.response?.data?.error || "فشل في جلب بيانات الشركة");
-      }
-    };
-    fetchCompanyData();
-  }, []);
-
-  const images = [currency, empImage, image1, image2, image3, image4, image5];
+  const companyData = companyFromContext || {};
+  const images = useMemo(
+    () => [currency, empImage, image1, image2, image3, image4, image5],
+    []
+  );
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [direction, setDirection] = useState("next");
 
   useEffect(() => {
+    if (images.length === 0) return;
     const interval = setInterval(() => {
-      setDirection("next");
       setCurrentIndex((prev) => (prev + 1) % images.length);
     }, 4000);
     return () => clearInterval(interval);
-  }, [images]);
+  }, [images.length]);
 
-  const goToSlide = (index) => {
-    setCurrentIndex(index);
+  const renderContent = () => {
+    switch (activeHref) {
+      case "/create-client":
+        return <CreateClient />;
+      case "/create-process-less":
+        return <CreateProcessLess />;
+      case "/create-process-greater":
+        return <CreateProcessGreater />;
+      case "/create-company":
+        return <CreateCompany />;
+      case "/clients":
+        return <AllClients />;
+      case "/employee":
+        return <Employee />;
+      case "/make-report":
+        return <MakeReport />;
+      case "/make-report-greater":
+        return <MakeReportForGreater />;
+      default:
+        return null;
+    }
   };
 
+  const toDisplay = (v) => {
+    if (v == null || typeof v === "object") return "—";
+    const s = String(v);
+    return s.trim() === "" ? "—" : s;
+  };
+
+  const companyFields = [
+    { label: "اسم الشركة", value: toDisplay(companyData.name) },
+    { label: "رقم الهاتف", value: toDisplay(companyData.phoneNumber) },
+    { label: "اسم المدير", value: toDisplay(companyData.administratorName) },
+    { label: "العملة", value: toDisplay(companyData.exchangeCurrency) },
+    {
+      label: "العنوان",
+      value:
+        [companyData.address?.city, companyData.address?.street]
+          .filter(Boolean)
+          .join(" – ") || "—",
+    },
+    {
+      label: "ضابط وحدة الالتزام",
+      value: toDisplay(companyData.complianceUnitOfficer),
+    },
+  ];
+
   return (
-    <div className="flex h-screen bg-gray-50 -mt-3">
-      <aside className="bg-white border-r p-4 shadow-sm w-16 lg:w-64 transition-all duration-300">
-        {/* Sidebar header */}
-        <div className="mb-6 text-center hidden lg:block">
-          <h2 className="text-xl font-bold text-indigo-600">
-            {" "}
-            ({userData.username})
-          </h2>
-        </div>
-
-        {/* Navigation */}
-        <div className="space-y-2">
-          {links.map(({ href, label, icon }) => (
-            <button
-              key={href}
-              onClick={() => setActiveHref(href)}
-              className={`w-full text-right flex items-center lg:justify-between justify-center px-4 py-3 rounded-lg transition-all font-medium text-sm
-          ${
-            activeHref === href
-              ? "bg-indigo-600 text-white"
-              : "hover:bg-indigo-50 text-indigo-700"
-          }`}
-            >
-              {/* Icon always shown */}
-              <span className="lg:ml-3">{icon}</span>
-
-              {/* Label only on large screens */}
-              <span className="hidden lg:inline">{label}</span>
-            </button>
-          ))}
+    <div className="flex min-h-screen bg-surface-50">
+      <aside className="w-16 lg:w-56 flex-shrink-0 border-r border-surface-200 bg-white shadow-nav">
+        <div className="flex flex-col h-full p-3">
+          <div className="mb-4 hidden lg:block px-2 py-3">
+            <p className="text-sm font-medium text-surface-500">مرحبًا،</p>
+            <p className="text-base font-bold text-surface-800 truncate">
+              {userData?.username != null ? String(userData.username) : "—"}
+            </p>
+          </div>
+          <nav className="space-y-1 flex-1">
+            {links.map(({ href, label, icon: Icon }) => (
+              <button
+                key={href}
+                onClick={() => setActiveHref(href)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-button text-sm font-medium transition ${
+                  activeHref === href
+                    ? "bg-primary-600 text-white shadow-sm"
+                    : "text-surface-600 hover:bg-primary-50 hover:text-primary-700"
+                }`}
+              >
+                <Icon className="h-5 w-5 flex-shrink-0" />
+                <span className="hidden lg:inline truncate text-right">
+                  {label}
+                </span>
+                {activeHref === href && (
+                  <ChevronLeft className="h-4 w-4 mr-auto hidden lg:block" />
+                )}
+              </button>
+            ))}
+          </nav>
         </div>
       </aside>
 
-      <main className="flex-1 px-6 py-8 overflow-y-auto">
-        {activeComponent || (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <main className="flex-1 overflow-y-auto p-6">
+        {renderContent() !== null ? (
+          renderContent()
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl">
             <div className="space-y-6">
-              <div className="col-span-1 space-y-8">
-                {/* Slider */}
-                <div className="relative w-full h-70 rounded-3xl overflow-hidden shadow-xl border border-cyan-200">
+              {images.length > 0 && (
+                <div className="rounded-card overflow-hidden border border-surface-200 bg-white shadow-card">
                   <div
-                    className="flex transition-transform duration-700 ease-in-out"
-                    style={{
-                      transform: `translateX(-${currentIndex * 100}%)`,
-                    }}
+                    className="flex transition-transform duration-500 ease-out"
+                    style={{ transform: `translateX(-${currentIndex * 100}%)` }}
                   >
-                    {images.map((src, index) => (
-                      <div key={index} className="w-full flex-shrink-0">
+                    {images.map((src, i) => (
+                      <div key={i} className="w-full flex-shrink-0">
                         <img
                           src={src}
-                          alt={`Slide ${index + 1}`}
-                          onError={(e) =>
-                            (e.target.src = "/fallback-image.png")
-                          }
-                          className="w-full h-auto max-h-screen object-contain"
+                          alt=""
+                          className="w-full h-64 object-cover"
+                          onError={(e) => {
+                            e.target.src =
+                              "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'%3E%3Crect fill='%23f1f5f9' width='400' height='200'/%3E%3Ctext fill='%2394a3b8' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14'%3Eصورة%3C/text%3E%3C/svg%3E";
+                          }}
                         />
                       </div>
                     ))}
                   </div>
                 </div>
-              </div>
-
-              <div className="p-6 bg-white rounded-2xl shadow border">
+              )}
+              <div className="card">
                 <div className="flex items-start gap-4">
-                  <div className="bg-cyan-100 p-3 rounded-lg">
-                    <Building2 className="h-8 w-8 text-cyan-700" />
+                  <div className="p-3 rounded-button bg-primary-100 text-primary-600">
+                    <Building2 className="h-8 w-8" />
                   </div>
                   <div className="flex-1">
-                    <h1 className="text-2xl font-bold text-indigo-700 mb-2">
-                      مرحبًا بك في نظام صرافة{" "}
-                      <span className="text-cyan-600">الرائد</span>
+                    <h1 className="text-xl font-bold text-surface-800 mb-2">
+                      مرحبًا في نظام الصيرفة
                     </h1>
-                    <p className="text-gray-600 text-sm">
-                      نظامك الشامل لإدارة عمليات الصرافة بكفاءة. يمكنك متابعة
-                      التحويلات، إدارة الأسعار، مراقبة العمليات وتتبع العملات.
-                      ابدأ من القائمة الجانبية.
+                    <p className="text-surface-600 text-sm leading-relaxed">
+                      نظامك الشامل لإدارة عمليات الصرافة. تابع التحويلات،
+                      الأسعار، والعمليات من القائمة الجانبية.
                     </p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow border">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-bold text-indigo-700 flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-indigo-500" />
+            <div className="card">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-surface-800 flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-primary-600" />
                   معلومات الشركة
                 </h2>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                {[
-                  { label: "اسم الشركة", value: companyData.name },
-                  {
-                    label: "رقم الهاتف",
-                    value: companyData.phoneNumber || "لا يوجد",
-                  },
-                  { label: "اسم المدير", value: companyData.administratorName },
-                  { label: "العملة", value: companyData.exchangeCurrency },
-                  {
-                    label: "العنوان",
-                    value: `${companyData.address?.city ?? ""} - ${
-                      companyData.address?.street ?? ""
-                    }`,
-                  },
-                  {
-                    label: "ضابط وحدة الالتزام",
-                    value: companyData.complianceUnitOfficer,
-                  },
-                ].map(({ label, value }, idx) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                {companyFields.map(({ label, value }, idx) => (
                   <div
                     key={idx}
-                    className="bg-gray-50 p-3 rounded-md border text-right"
+                    className="bg-surface-50 rounded-input p-3 border border-surface-100 text-right"
                   >
-                    <div className="text-gray-500 text-xs">{label}</div>
-                    <div className="text-indigo-800 font-medium truncate">
+                    <div className="text-surface-500 text-xs">{label}</div>
+                    <div className="text-surface-800 font-medium truncate mt-0.5">
                       {value}
                     </div>
                   </div>
@@ -261,7 +218,7 @@ const MainPage = () => {
               </div>
               <button
                 onClick={() => setActiveHref("/create-company")}
-                className="mt-6 w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium"
+                className="mt-4 w-full btn-primary"
               >
                 تعديل المعلومات
               </button>

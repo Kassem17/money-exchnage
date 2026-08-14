@@ -85,12 +85,12 @@ export default function PermissionsModal({ userData, isOpen, onClose }) {
                   <td className="px-4 py-3 whitespace-nowrap text-center">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        userData[permission.key]
+                        userData?.[permission.key]
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
                       }`}
                     >
-                      {userData[permission.key] ? (
+                      {userData?.[permission.key] ? (
                         <Check className="w-4 h-4" />
                       ) : (
                         <X className="w-4 h-4 text-red-500" />

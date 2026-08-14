@@ -21,7 +21,7 @@ const KYC = ({ formData, onClose }) => {
 
   const handlePrint = () => {
     const originalTitle = document.title;
-    document.title = `نموذج اعرف عميلك - ${clientName}`;
+    document.title = `نموذج اعرف عميلك - ${String(clientName)}`;
 
     const style = document.createElement("style");
     style.innerHTML = `
@@ -97,7 +97,8 @@ const KYC = ({ formData, onClose }) => {
   }, [formData.clientId, token, backendUrl]);
 
   const address = client?.currentAddress || {};
-  const clientName = client?.fullname || "العميل";
+  const clientName =
+    typeof client?.fullname === "string" ? client.fullname : "العميل";
 
   const handleEditToggle = () => {
     setIsEditing(!isEditing);

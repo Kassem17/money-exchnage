@@ -46,8 +46,6 @@ const GeneralReportTable = ({
     return true;
   });
 
-  console.log(filteredClients, "fasfaf");
-
   const totalClients = filteredClients.length;
   const totalProcesses = filteredClients.reduce(
     (acc, client) => acc + client.processCount,

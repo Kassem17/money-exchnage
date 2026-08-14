@@ -12,14 +12,14 @@ const InputField = ({
   type = "text",
   required = false,
 }) => (
-  <div className="space-y-1">
-    <label className="block text-sm font-medium text-purple-600">{label}</label>
+  <div className="space-y-1.5">
+    <label className="label">{label}</label>
     <input
       type={type}
       name={name}
       value={value}
       onChange={onChange}
-      className="w-full border border-gray-300 rounded-md p-2 text-sm outline-none transition-all duration-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+      className="input-field"
       required={required}
     />
   </div>
@@ -200,7 +200,7 @@ const CreateClient = () => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-blue-300 via-indigo-100 to-purple-300 py-6 px-4 sm:px-6 lg:px-8 -mt-9">
+    <div className="py-3 px-2 sm:px-6 lg:px-8 -mt-7">
       <div className="max-w-6xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden transform transition-all duration-300 hover:shadow-2xl">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">

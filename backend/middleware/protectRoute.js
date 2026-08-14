@@ -5,16 +5,18 @@ const protectRoute = async (req, res, next) => {
     req.headers.authorization && req.headers.authorization.split(" ")[1];
 
   if (!token) {
-    return res.status(401).json({ message: "Please Login to access" });
+    return res.status(401).json({ success: false, message: "Please Login to access" });
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = { userId: decoded.id, role: decoded.role }; // Assuming the token includes a role
+    req.user = { userId: decoded.id, role: decoded.role };
     next();
   } catch (error) {
-    console.log(error); // Log for debugging in development
-    res.status(401).json({ message: "Please Login to access" });
+    if (process.env.NODE_ENV !== "production") {
+      console.error("JWT verify error:", error.message);
+    }
+    return res.status(401).json({ success: false, message: "Please Login to access" });
   }
 };
 

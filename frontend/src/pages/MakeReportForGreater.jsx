@@ -37,12 +37,12 @@ const MakeReportForGreater = () => {
 
   // Derived values
   const selectedClient = allClients.find(
-    (client) => client._id === selectedClientId
+    (client) => client._id === selectedClientId,
   );
   const totalPages = Math.ceil(clientProcesses.length / rowsPerPage);
   const paginatedProcesses = clientProcesses.slice(
     (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
+    currentPage * rowsPerPage,
   );
 
   // Calculate totals - combining USD and "دولار أمريكي"
@@ -95,7 +95,7 @@ const MakeReportForGreater = () => {
           `${backendUrl}/api/employee/get-clients`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
 
         if (data.success) {
@@ -103,12 +103,12 @@ const MakeReportForGreater = () => {
 
           if (!userData.accessClientGreater) {
             filtered = filtered.filter(
-              (client) => client.clientType !== "greater than 10000"
+              (client) => client.clientType !== "greater than 10000",
             );
           }
           if (!userData.accessClientLess) {
             filtered = filtered.filter(
-              (client) => client.clientType !== "less than 10000"
+              (client) => client.clientType !== "less than 10000",
             );
           }
 
@@ -139,13 +139,13 @@ const MakeReportForGreater = () => {
         response = await axios.post(
           `${backendUrl}/api/employee/get-processes-for-report-greater`,
           { clientId, startDate, endDate },
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: `Bearer ${token}` } },
         );
       } else {
         response = await axios.post(
           `${backendUrl}/api/employee/get-processes`,
           { startDate, endDate },
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: `Bearer ${token}` } },
         );
       }
 
@@ -186,7 +186,7 @@ const MakeReportForGreater = () => {
     const fetchCurrencies = async () => {
       try {
         const { data } = await axios.get(
-          backendUrl + "/api/employee/get-currency"
+          backendUrl + "/api/employee/get-currency",
         );
         if (data.success) {
           setCurrencies(data.currencies);
@@ -266,7 +266,7 @@ const MakeReportForGreater = () => {
     const { status } = getStatus(
       usdBuyTotal + usdSellTotal,
       numericMin,
-      numericMax
+      numericMax,
     );
 
     voucherWindow.document.write(`
@@ -427,7 +427,7 @@ const MakeReportForGreater = () => {
                 selectedClient.phoneNumber || "غير متوفر"
               }</div>
               <div class="detail-item"><span class="detail-label">الفترة:</span> ${formatDate(
-                startDate
+                startDate,
               )} - ${formatDate(endDate)}</div>
             </div>
           </div>
@@ -467,7 +467,7 @@ const MakeReportForGreater = () => {
                                       p.processType === "Buy" ? "شراء" : "بيع"
                                     }</td>
 
-                </tr>`
+                </tr>`,
                 )
                 .join("")}
             </tbody>
@@ -484,7 +484,7 @@ const MakeReportForGreater = () => {
                   <div class="summary-item">
                     <span>${getCurrencyName(cur, currencies)}:</span>
                      <span>${formatWithCommas(amt.toFixed(2))}</span>
-                  </div>`
+                  </div>`,
                   )
                   .join("")}
               </div>
@@ -496,14 +496,14 @@ const MakeReportForGreater = () => {
                   <div class="summary-item">
                     <span>${getCurrencyName(cur, currencies)}:</span>
                      <span>${formatWithCommas(amt.toFixed(2))}</span>
-                  </div>`
+                  </div>`,
                   )
                   .join("")}
               </div>
               <div class="summary-card">
                 <div class="summary-card-title">إجمالي بالدولار</div>
                 <div class="summary-item"><span>الإجمالي:</span><span>${formatWithCommas(
-                  (usdBuyTotal + usdSellTotal).toFixed(2)
+                  (usdBuyTotal + usdSellTotal).toFixed(2),
                 )}</span></div>
                
               </div>
@@ -760,10 +760,10 @@ const MakeReportForGreater = () => {
                   d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                 />
               </svg>
-              Transaction Period
+              فترة المعاملة
             </h3>
             <p className="text-sm text-gray-500">
-              Select a start and end date to filter transactions.
+              حدد تاريخي البدء والانتهاء لتصفية المعاملات.
             </p>
           </div>
 
@@ -771,7 +771,7 @@ const MakeReportForGreater = () => {
           <div className="flex flex-col sm:flex-row gap-4 flex-1 max-w-2xl w-full">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                From Date
+                من
               </label>
               <input
                 type="date"
@@ -787,7 +787,7 @@ const MakeReportForGreater = () => {
 
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                To Date
+                إلى
               </label>
               <input
                 type="date"
@@ -937,7 +937,7 @@ const MakeReportForGreater = () => {
                         {formatWithCommas(amount.toFixed(2))}
                       </span>
                     </div>
-                  )
+                  ),
                 )}
               </div>
             </div>
@@ -960,7 +960,7 @@ const MakeReportForGreater = () => {
                         {formatWithCommas(total.toFixed(2))}
                       </span>
                     </div>
-                  )
+                  ),
                 )}
               </div>
             </div>
@@ -1011,13 +1011,13 @@ const MakeReportForGreater = () => {
       </div>
       <h3 className="text-lg font-medium text-gray-800">
         {selectedClientId
-          ? "No transactions found"
-          : "No report data available"}
+          ? "لم يتم العثور على أي معاملات"
+          : "لا تتوفر بيانات للتقرير"}
       </h3>
       <p className="mt-2 text-gray-500 max-w-md mx-auto">
         {selectedClientId
-          ? "This client has no transactions in the selected date range. Try adjusting the dates."
-          : "Select a client and date range to generate a transaction report."}
+          ? "لا توجد معاملات لهذا العميل ضمن النطاق الزمني المحدد. حاول تعديل التواريخ."
+          : "اختر عميلاً ونطاقاً زمنياً لإنشاء تقرير بالمعاملات."}
       </p>
     </div>
   );
@@ -1075,7 +1075,7 @@ const MakeReportForGreater = () => {
                                   {/* Date */}
                                   <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">
                                     {new Date(p.processDate).toLocaleDateString(
-                                      "ar-EG"
+                                      "ar-EG",
                                     )}
                                   </td>
 

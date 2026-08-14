@@ -12,14 +12,12 @@ import NotFound from "./pages/NotFound";
 
 import MainPage from "./pages/AdminPages/MainPage";
 import AddEmployee from "./pages/AdminPages/AddEmployee";
-
 import EmployeeMainPage from "./Employee/EmployeeMainPage";
 import CreateClient from "./pages/CreateClient";
 import CreateCompany from "./pages/CreateCompany";
 import Employee from "./pages/Employee";
 import CTS from "./components/CTS";
 import KYC from "./components/KYC";
-
 import CreateProcessLess from "./pages/ProcessesCreation/CreateProcessLess";
 import CreateProcessGreater from "./pages/ProcessesCreation/CreateProcessGreater";
 import AllClients from "./pages/Clients/AllClients";
@@ -36,20 +34,58 @@ const App = () => {
     localStorage.setItem("lastPath", location.pathname + location.search);
   }, [location]);
 
-  // Restore last path if user lands at "/"
+  // Restore last path only if it's allowed for the current role (avoids sending employees to admin-only routes)
+  const allowedPathsByRole = {
+    admin: [
+      "/",
+      "/create-client",
+      "/create-process-less",
+      "/create-process-greater",
+      "/create-company",
+      "/clients",
+      "/employee",
+      "/add-employee",
+      "/make-report",
+      "/make-report-greater",
+      "/cts",
+      "/kyc",
+      "/employee-main-page",
+    ],
+    employee: [
+      "/",
+      "/create-client",
+      "/create-process-less",
+      "/create-process-greater",
+      "/clients",
+      "/make-report",
+      "/make-report-greater",
+      "/cts",
+      "/kyc",
+      "/employee-main-page",
+    ],
+  };
+
   useEffect(() => {
     const lastPath = localStorage.getItem("lastPath");
-    if (lastPath && window.location.pathname === "/") {
-      navigate(lastPath);
+    const pathOnly = lastPath?.split("?")[0] || "";
+    const role = userData?.role;
+    if (
+      lastPath &&
+      window.location.pathname === "/" &&
+      role &&
+      allowedPathsByRole[role]
+    ) {
+      const allowed = allowedPathsByRole[role];
+      if (allowed.includes(pathOnly)) {
+        navigate(lastPath);
+      }
     }
-  }, []);
+  }, [navigate, userData?.role]);
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="text-xl font-semibold text-blue-600">
-          جارٍ التحميل...
-        </div>
+      <div className="h-screen flex items-center justify-center bg-surface-50">
+        <div className="text-lg font-medium text-primary-600">جارٍ التحميل...</div>
       </div>
     );
   }
@@ -82,17 +118,16 @@ const App = () => {
   );
 
   return (
-    <div className="w-full min-h-screen bg-gray-100 flex flex-col">
-      {/* Fixed Navbar */}
+    <div className="w-full min-h-screen bg-surface-50 flex flex-col">
       {token && <Navbar />}
 
       <ToastContainer
-        position="top-right"
+        position="top-left"
         autoClose={2000}
         hideProgressBar={false}
         newestOnTop
         closeOnClick
-        rtl={false}
+        rtl={true}
         pauseOnFocusLoss={false}
         draggable
         pauseOnHover={false}
@@ -101,9 +136,8 @@ const App = () => {
         bodyClassName="custom-toast-body"
       />
 
-      {/* Main Content */}
-      <main className="flex-grow ">
-        <Routes>
+      <main className="flex-grow">
+          <Routes>
           <Route path="/reset-password" element={<ResetPassword />} />
 
           {!token ? (
@@ -111,7 +145,7 @@ const App = () => {
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<Login />} />
             </>
-          ) : userData.role === "admin" ? (
+          ) : userData?.role === "admin" ? (
             <>
               <Route path="/" element={<MainPage />} />
               {adminRoutes}
@@ -124,7 +158,7 @@ const App = () => {
           )}
 
           <Route path="*" element={<NotFound />} />
-        </Routes>
+          </Routes>
       </main>
     </div>
   );

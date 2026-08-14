@@ -25,7 +25,7 @@ const CTS = ({ formData, onClose, currenciesData }) => {
 
   const handlePrint = () => {
     const originalTitle = document.title;
-    document.title = `إستمارة عملية نقدية - ${clientName}`;
+    document.title = `إستمارة عملية نقدية - ${String(clientName)}`;
     const style = document.createElement("style");
     style.innerHTML = `
       @media print {
@@ -152,7 +152,8 @@ const CTS = ({ formData, onClose, currenciesData }) => {
     }
   };
 
-  const clientName = client?.fullname || "العميل";
+  const clientName =
+    typeof client?.fullname === "string" ? client.fullname : "العميل";
 
   const [signatures, setSignatures] = useState({
     date: "",

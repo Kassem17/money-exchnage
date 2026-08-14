@@ -111,6 +111,9 @@ const clientSchema = new mongoose.Schema({
   },
 });
 
+clientSchema.index({ clientType: 1 });
+clientSchema.index({ employeeId: 1 });
+
 clientSchema.pre("save", function (next) {
   if (this.minimum == null) {
     this.minimum = 2500;

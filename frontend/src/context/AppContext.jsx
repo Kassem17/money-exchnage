@@ -6,9 +6,7 @@ import { socket } from "../utils/socket";
 export const AppContext = createContext();
 
 export const AppContextProvider = ({ children }) => {
-  const [token, setToken] = useState(
-    localStorage.getItem("token") ? localStorage.getItem("token") : ""
-  );
+  const [token, setToken] = useState(() => localStorage.getItem("token") ?? "");
   const [userData, setUserData] = useState({});
   const [clients, setClients] = useState([]);
   const [company, setCompany] = useState({});
@@ -18,13 +16,18 @@ export const AppContextProvider = ({ children }) => {
 
   useEffect(() => {
     const fetchUserData = async () => {
+      if (!backendUrl) {
+        setLoading(false);
+        return;
+      }
       try {
-        // Call backend to verify token & fetch user
         const { data } = await axios.get(`${backendUrl}/api/admin/get-data`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (data.success) {
-          setUserData(data.employee);
+          setUserData(data.employee ?? {});
+        } else {
+          setToken(null);
         }
       } catch (err) {
         setToken(null);
@@ -38,7 +41,7 @@ export const AppContextProvider = ({ children }) => {
     } else {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, backendUrl]);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -53,31 +56,30 @@ export const AppContextProvider = ({ children }) => {
           setClients(data.clients);
         }
       } catch (err) {
-        console.log(err);
-      } finally {
-        setLoading(false);
+        // Silent fail for clients; user may not have permission
       }
+      // Do not set loading(false) here — only fetchUserData controls loading so the app waits for user data before rendering
     };
 
     if (token) {
       fetchClients();
-    } else {
-      setLoading(false);
     }
-  }, []);
+  }, [token, backendUrl]);
 
   useEffect(() => {
     const fetchCompany = async () => {
+      if (!backendUrl) return;
       try {
         const { data } = await axios.get(backendUrl + "/api/admin/get-company");
         if (data.success) {
-          setCompany(data.company);
+          setCompany(data.company ?? {});
         } else {
-          toast.error(data.message);
+          toast.error(data.message ?? "فشل في جلب بيانات الشركة");
         }
       } catch (error) {
-        console.log(error.message);
-        toast.error(error.message);
+        const msg =
+          error?.response?.data?.message ?? error?.message ?? "خطأ في الاتصال";
+        toast.error(msg);
       }
     };
     if (token) {
@@ -86,7 +88,7 @@ export const AppContextProvider = ({ children }) => {
   }, [token, backendUrl]);
 
   const value = {
-    backendUrl,
+    backendUrl: backendUrl ?? "",
     token,
     setToken,
     userData,

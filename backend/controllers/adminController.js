@@ -1,6 +1,5 @@
 import Company from "../models/Company.js";
 import Employee from "../models/Employee.js";
-import bcrypt from "bcrypt";
 import { io } from "../server.js";
 
 export const createCompany = async (req, res) => {
@@ -32,7 +31,7 @@ export const createCompany = async (req, res) => {
     });
 
     const savedCompany = await newCompany.save();
-    io.emit("company:created", savedCompany);
+    if (io) io.emit("company:created", savedCompany);
     res.status(201).json({
       success: true,
       message: "Company created successfully ",
@@ -72,7 +71,7 @@ export const updateCompany = async (req, res) => {
     Object.assign(company, req.body);
     const updatedCompany = await company.save();
 
-    io.emit("company:updated", updatedCompany);
+    if (io) io.emit("company:updated", updatedCompany);
 
     res.status(200).json({
       success: true,
@@ -164,7 +163,7 @@ export const addEmployee = async (req, res) => {
     });
 
     await newEmployee.save();
-    io.emit("employee:created", newEmployee);
+    if (io) io.emit("employee:created", newEmployee);
 
     res.status(201).json({
       success: true,
@@ -236,8 +235,7 @@ export const deleteEmployee = async (req, res) => {
         .json({ success: false, error: "Employee not found" });
     }
 
-    // Make sure 'io' is properly imported/initialized
-    io.emit("employee:deleted", employee._id);
+    if (io) io.emit("employee:deleted", employee._id);
 
     res.status(200).json({
       success: true,
@@ -252,7 +250,7 @@ export const getEmployeeByUsername = async (req, res) => {
   try {
     const { username } = req.params;
 
-    const employee = await Employee.find({ username }).select("-password");
+    const employee = await Employee.findOne({ username }).select("-password");
     if (!employee) {
       return res
         .status(404)
@@ -285,7 +283,7 @@ export const changeEmployeeState = async (req, res) => {
     employee.isActive = !employee.isActive;
     await employee.save();
 
-    io.emit("employee:statusChanged", employee);
+    if (io) io.emit("employee:statusChanged", employee);
 
     res.status(200).json({
       success: true,
@@ -337,7 +335,7 @@ export const setAdmin = async (req, res) => {
 
     await employee.save();
 
-    io.emit("employee:adminSet", employee);
+    if (io) io.emit("employee:adminSet", employee);
 
     res.status(200).json({
       success: true,
@@ -365,21 +363,15 @@ export const getAdmins = async (req, res) => {
       });
     }
 
-    const admins = Employee.find({ status: "admin" });
+    const admins = await Employee.find({ role: "admin" }).select("-password").lean();
 
-    if (admins.length < 0) {
-      return res.status(400).json({
-        success: true,
-        message: "No admins found",
-      });
-    }
     res.status(200).json({
       success: true,
       message: "fetched successfully",
-      admins,
+      admins: admins.length === 0 ? [] : admins,
     });
   } catch (error) {
-    console.error("Error in setAdmin:", error);
+    console.error("Error in getAdmins:", error);
     res.status(500).json({
       success: false,
       error: error.message,

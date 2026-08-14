@@ -68,7 +68,7 @@ export const createClient = async (req, res) => {
     });
 
     const savedClient = await newClient.save();
-    io.emit("client:created", savedClient);
+    if (io) io.emit("client:created", savedClient);
 
     res.status(200).json({
       success: true,
@@ -204,7 +204,7 @@ export const editClient = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Client not found" });
 
-    io.emit("client:updated", updatedClient);
+    if (io) io.emit("client:updated", updatedClient);
     res.status(200).json({
       success: true,
       message: "Client updated successfully",
@@ -241,7 +241,7 @@ export const deleteClient = async (req, res) => {
       await Process.deleteMany({ _id: { $in: client.processes } });
     }
     await Client.findByIdAndDelete(id);
-    io.emit("client:deleted", { _id: client._id });
+    if (io) io.emit("client:deleted", { _id: client._id });
 
     res.status(200).json({
       success: true,
@@ -568,7 +568,7 @@ export const editProcess = async (req, res) => {
     });
 
     const updatedProcess = await process.save();
-    io.emit("process:edited", updatedProcess);
+    if (io) io.emit("process:edited", updatedProcess);
 
     res.status(200).json({
       success: true,
@@ -613,7 +613,7 @@ export const deleteProcess = async (req, res) => {
     });
     await Process.findByIdAndDelete(processId);
 
-    io.emit("processDeleted", {
+    if (io) io.emit("processDeleted", {
       processId,
       clientId: process.clientId,
       employeeId: process.employeeId,
@@ -652,7 +652,7 @@ export const addCurrency = async (req, res) => {
     const newCurrency = new Currency({ name, symbol, code: upperCode });
     await newCurrency.save();
 
-    io.emit("Currency:Added", newCurrency);
+    if (io) io.emit("Currency:Added", newCurrency);
     res.status(200).json({
       success: true,
       message: "Currency added successfully",
@@ -696,7 +696,7 @@ export const editCurrency = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Currency not found" });
 
-    io.emit("currency:updated", updated);
+    if (io) io.emit("currency:updated", updated);
     res.status(200).json({ success: true, data: updated });
   } catch (error) {
     console.error("Error updating currency:", error);
